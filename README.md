@@ -1,5 +1,6 @@
 PerioR-Tree
 ====
+[![Build Status](https://travis-ci.org/ToruNiina/periortree.svg?branch=master)](https://travis-ci.org/ToruNiina/periortree)
 
 An implementation of R-Tree[1](#References) for Periodic Boundary Condition.
 
