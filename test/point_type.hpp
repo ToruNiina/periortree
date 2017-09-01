@@ -22,6 +22,7 @@ struct xyz
     xyz& operator=(const xyz& rhs)
     {
         x = rhs.x; y = rhs.y; z = rhs.z;
+        return *this;
     }
 
     double x, y, z;
@@ -38,7 +39,7 @@ struct position
     ~position(){}
 
     position(const position& rhs) : v(rhs.v) {}
-    position& operator=(const position& rhs) {v = rhs.v;}
+    position& operator=(const position& rhs) {v = rhs.v; return *this;}
 
     boost::array<double, 3> v;
 };
