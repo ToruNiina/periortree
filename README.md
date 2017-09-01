@@ -1,11 +1,11 @@
 PerioR-Tree
 ====
 
-An implementation of R-Tree[1](##References) for Periodic Boundary Condition.
+An implementation of R-Tree[1](#References) for Periodic Boundary Condition.
 
 PerioR-Tree is a ultraflexible header-only library depending on Boost C++ Library.
 
-The overall design is deeply inspired by Boost.Geometry[2](##References).
+The overall design is deeply inspired by Boost.Geometry[2](#References).
 
 ## Example
 
