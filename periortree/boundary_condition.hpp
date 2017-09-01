@@ -161,7 +161,7 @@ struct adjust_direction_impl
         {
             access::set(p, x - access::get(ds));
         }
-        return adjust_position_impl<pointT, I-1>::invoke(p, ds, dsh);
+        return adjust_direction_impl<pointT, I-1>::invoke(p, ds, dsh);
     }
 };
 
@@ -188,7 +188,7 @@ adjust_position(pointT x, const cubic_periodic_boundary<pointT>& b)
 {
     const pointT& up = b.upper();
     const pointT& lw = b.lower();
-    const pointT ds = traits::sub_point(up, lw);
+    const pointT ds = traits::sub_point_v(up, lw);
 
     detail::adjust_position_impl<pointT, traits::dimension_of<pointT>::value
         >::invoke(x, up, lw, ds);
@@ -202,8 +202,8 @@ inline typename boost::enable_if<
 adjust_direction(pointT x, const cubic_periodic_boundary<pointT>& b)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
-    const pointT ds      = traits::sub_point(b.upper(), b.lower());
-    const pointT ds_half = traits::mul_point(ds, 0.5);
+    const pointT ds      = traits::sub_point_v(b.upper(), b.lower());
+    const pointT ds_half = traits::mul_point_v(ds, 0.5);
 
     detail::adjust_position_impl<pointT, traits::dimension_of<pointT>::value
         >::invoke(x, ds, ds_half);
