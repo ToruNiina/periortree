@@ -101,8 +101,7 @@ typename boost::enable_if<
     typename traits::coordinate_type_of<typename traits::point_type_of<boxT>::type>::type
          >::type
 area(const boxT& bx, const boundaryT& bd)
-    BOOST_NOEXCEPT_IF(noexcept(detail::area_impl<
-            typename traits::point_type_of<boxT>::type,
+    BOOST_NOEXCEPT_IF(noexcept(detail::area_impl<boxT, boundaryT,
             traits::dimension_of<typename traits::point_type_of<boxT>::type>::value
         >::invoke(1, bx, bd)))
 {
