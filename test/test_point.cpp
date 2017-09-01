@@ -13,11 +13,11 @@
 BOOST_AUTO_TEST_CASE(test_xyz_traits)
 {
     BOOST_CHECK((boost::is_same<
-        typename perior::traits::tag<perior::test::xyz>::type,
+        perior::traits::tag<perior::test::xyz>::type,
         perior::traits::point_tag>::value));
 
     BOOST_CHECK((boost::is_same<
-        typename perior::traits::coordinate_type_of<perior::test::xyz>::type,
+        perior::traits::coordinate_type_of<perior::test::xyz>::type,
         double>::value));
 
     BOOST_CHECK(perior::traits::dimension_of<perior::test::xyz>::value == 3);
@@ -26,11 +26,11 @@ BOOST_AUTO_TEST_CASE(test_xyz_traits)
 BOOST_AUTO_TEST_CASE(test_position_traits)
 {
     BOOST_CHECK((boost::is_same<
-        typename perior::traits::tag<perior::test::position>::type,
+        perior::traits::tag<perior::test::position>::type,
         perior::traits::point_tag>::value));
 
     BOOST_CHECK((boost::is_same<
-        typename perior::traits::coordinate_type_of<perior::test::position>::type,
+        perior::traits::coordinate_type_of<perior::test::position>::type,
         double>::value));
 
     BOOST_CHECK(perior::traits::dimension_of<perior::test::position>::value == 3);
