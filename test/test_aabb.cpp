@@ -8,6 +8,7 @@
 #endif
 
 #include <periortree/boundary_condition.hpp>
+#include <periortree/area.hpp>
 #include <test/point_type.hpp>
 #include <test/aabb_type.hpp>
 
@@ -19,7 +20,7 @@ BOOST_AUTO_TEST_CASE(test_aabb_unlimited)
         const perior::test::aabb box(l, u);
         const perior::unlimited_boundary<perior::test::xyz> boundary;
 
-        const double area = perior::traits::area(box, boundary);
+        const double area = perior::area(box, boundary);
         BOOST_CHECK_CLOSE_FRACTION(area, 1000.0, 1e-12);
     }
 }
