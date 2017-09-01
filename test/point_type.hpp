@@ -59,11 +59,13 @@ template<> struct point_access<perior::test::xyz, 0>
     typedef coordinate_type_of<point_type>::type coordinate_type;
 
     BOOST_FORCEINLINE
-    coordinate_type get(const point_type& p) const BOOST_NOEXCEPT_OR_NOTHROW
+    static coordinate_type
+    get(const point_type& p) BOOST_NOEXCEPT_OR_NOTHROW
     {return p.x;}
 
     BOOST_FORCEINLINE
-    void set(point_type& p, coordinate_type x) const BOOST_NOEXCEPT_OR_NOTHROW
+    static void
+    set(point_type& p, coordinate_type x) BOOST_NOEXCEPT_OR_NOTHROW
     {p.x = x;}
 };
 template<> struct point_access<perior::test::xyz, 1>
@@ -72,11 +74,13 @@ template<> struct point_access<perior::test::xyz, 1>
     typedef coordinate_type_of<point_type>::type coordinate_type;
 
     BOOST_FORCEINLINE
-    coordinate_type get(const point_type& p) const BOOST_NOEXCEPT_OR_NOTHROW
+    static coordinate_type
+    get(const point_type& p) BOOST_NOEXCEPT_OR_NOTHROW
     {return p.y;}
 
     BOOST_FORCEINLINE
-    void set(point_type& p, coordinate_type y) const BOOST_NOEXCEPT_OR_NOTHROW
+    static void
+    set(point_type& p, coordinate_type y) BOOST_NOEXCEPT_OR_NOTHROW
     {p.y = y;}
 };
 template<> struct point_access<perior::test::xyz, 2>
@@ -85,11 +89,13 @@ template<> struct point_access<perior::test::xyz, 2>
     typedef coordinate_type_of<point_type>::type coordinate_type;
 
     BOOST_FORCEINLINE
-    coordinate_type get(const point_type& p) const BOOST_NOEXCEPT_OR_NOTHROW
+    static coordinate_type
+    get(const point_type& p) BOOST_NOEXCEPT_OR_NOTHROW
     {return p.z;}
 
     BOOST_FORCEINLINE
-    void set(point_type& p, coordinate_type z) const BOOST_NOEXCEPT_OR_NOTHROW
+    static void
+    set(point_type& p, coordinate_type z) BOOST_NOEXCEPT_OR_NOTHROW
     {p.z = z;}
 };
 
@@ -107,11 +113,13 @@ struct point_access<perior::test::position, I>
     BOOST_STATIC_ASSERT(I < dimension_of<point_type>::value);
 
     BOOST_FORCEINLINE
-    coordinate_type get(const point_type& p) const BOOST_NOEXCEPT_OR_NOTHROW
+    static coordinate_type
+    get(const point_type& p) BOOST_NOEXCEPT_OR_NOTHROW
     {return p.v[I];}
 
     BOOST_FORCEINLINE
-    void set(point_type& p, coordinate_type x) const BOOST_NOEXCEPT_OR_NOTHROW
+    static void
+    set(point_type& p, coordinate_type x) BOOST_NOEXCEPT_OR_NOTHROW
     {p.v[I] = x;}
 };
 
