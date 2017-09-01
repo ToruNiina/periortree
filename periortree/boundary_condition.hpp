@@ -25,6 +25,10 @@ struct unlimited_boundary
 
     typedef pointT   point_type;
     typedef typename traits::coordinate_type_of<point_type>::type coordinate_type;
+
+    unlimited_boundary(){}
+    ~unlimited_boundary(){}
+
 };
 
 template<typename pointT>
