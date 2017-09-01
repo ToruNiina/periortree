@@ -30,7 +30,7 @@ struct unlimited_boundary
 template<typename pointT>
 BOOST_FORCEINLINE
 typename boost::enable_if<
-    boost::is_same<traits::tag<pointT>::type, traits::point_tag>,
+    boost::is_same<typename traits::tag<pointT>::type, traits::point_tag>,
     pointT>::type
 adjust_position(pointT x, const unlimited_boundary<pointT>& b)
     BOOST_NOEXCEPT_OR_NOTHROW
@@ -41,7 +41,7 @@ adjust_position(pointT x, const unlimited_boundary<pointT>& b)
 template<typename pointT>
 BOOST_FORCEINLINE
 typename boost::enable_if<
-    boost::is_same<traits::tag<pointT>::type, traits::point_tag>,
+    boost::is_same<typename traits::tag<pointT>::type, traits::point_tag>,
     pointT>::type
 adjust_direction(pointT x, const unlimited_boundary<pointT>& b)
     BOOST_NOEXCEPT_OR_NOTHROW
@@ -104,7 +104,7 @@ template<typename pointT, std::size_t I>
 struct adjust_position_impl
 {
     typedef traits::point_access<pointT, I-1>         access;
-    typedef typename coordinate_type_of<pointT>::type coordinate_type;
+    typedef typename traits::coordinate_type_of<pointT>::type coordinate_type;
 
     BOOST_FORCEINLINE
     static void
@@ -146,7 +146,7 @@ template<typename pointT, std::size_t I>
 struct adjust_direction_impl
 {
     typedef traits::point_access<pointT, I-1>         access;
-    typedef typename coordinate_type_of<pointT>::type coordinate_type;
+    typedef typename traits::coordinate_type_of<pointT>::type coordinate_type;
 
     // dsh = ds / 2
     BOOST_FORCEINLINE
@@ -187,7 +187,7 @@ struct adjust_direction_impl<pointT, 0>
 
 template<typename pointT>
 inline typename boost::enable_if<
-    boost::is_same<traits::tag<pointT>::type, traits::point_tag>,
+    boost::is_same<typename traits::tag<pointT>::type, traits::point_tag>,
     pointT>::type
 adjust_position(pointT x, const cubic_periodic_boundary<pointT>& b)
     BOOST_NOEXCEPT_OR_NOTHROW
@@ -203,7 +203,7 @@ adjust_position(pointT x, const cubic_periodic_boundary<pointT>& b)
 
 template<typename pointT>
 inline typename boost::enable_if<
-    boost::is_same<traits::tag<pointT>::type, traits::point_tag>,
+    boost::is_same<typename traits::tag<pointT>::type, traits::point_tag>,
     pointT>::type
 adjust_direction(pointT x, const cubic_periodic_boundary<pointT>& b)
     BOOST_NOEXCEPT_OR_NOTHROW
