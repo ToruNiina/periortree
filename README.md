@@ -10,7 +10,11 @@ The overall design is deeply inspired by Boost.Geometry[2](#References).
 
 ## Example
 
+WIP
+
 ## Usage
+
+WIP
 
 ## References
 
