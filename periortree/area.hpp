@@ -112,4 +112,4 @@ area(const boxT& bx, const boundaryT& bd)
 }
 
 }// perior
-#endif//
+#endif//PERIOR_TREE_AREA_HPP
