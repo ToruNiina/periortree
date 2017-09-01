@@ -63,8 +63,8 @@ struct cubic_periodic_boundary
     cubic_periodic_boundary(){};
     ~cubic_periodic_boundary(){};
 
-    cubic_periodic_boundary(const point_type& lhs, const point_type& rhs)
-        : lower_(lhs), upper_(rhs)
+    cubic_periodic_boundary(const point_type& low, const point_type& up)
+        : lower_(low), upper_(up)
     {}
     cubic_periodic_boundary(const cubic_periodic_boundary& rhs)
         : lower_(rhs.lower_), upper_(rhs.upper_)
@@ -211,10 +211,10 @@ adjust_direction(pointT x, const cubic_periodic_boundary<pointT>& b)
     const pointT ds      = traits::sub_point_v(b.upper(), b.lower());
     const pointT ds_half = traits::mul_point_v(ds, 0.5);
 
-    detail::adjust_position_impl<pointT, traits::dimension_of<pointT>::value
+    detail::adjust_direction_impl<pointT, traits::dimension_of<pointT>::value
         >::invoke(x, ds, ds_half);
     return x;
 }
 
 }// perior
-#define PERIOR_TREE_BOUNDARY_CONDITION_HPP
+#endif//PERIOR_TREE_BOUNDARY_CONDITION_HPP
