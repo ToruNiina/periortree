@@ -19,8 +19,8 @@ template<typename pointT>
 struct unlimited_boundary
 {
     BOOST_STATIC_ASSERT_MSG(
-        boost::is_same<typename traits::tag<pointT>::type,
-                       traits::point_tag>::value,
+        (boost::is_same<typename traits::tag<pointT>::type,
+                        traits::point_tag>::value),
         "perior::unlimited_boundary: pointT must be tagged as point_type");
 
     typedef pointT   point_type;
@@ -53,8 +53,8 @@ template<typename pointT>
 struct cubic_periodic_boundary
 {
     BOOST_STATIC_ASSERT_MSG(
-        boost::is_same<typename traits::tag<pointT>::type,
-                       traits::point_tag>::value,
+        (boost::is_same<typename traits::tag<pointT>::type,
+                        traits::point_tag>::value),
         "perior::unlimited_boundary: pointT must be tagged as point_type");
 
     typedef pointT   point_type;
