@@ -197,7 +197,7 @@ struct div_point_impl<pointT, 0>
 
 template<typename pointT>
 BOOST_FORCEINLINE
-boost::enable_if<boost::is_same<tag<pointT>::type, point_tag>, pointT>::type
+typename boost::enable_if<boost::is_same<typename tag<pointT>::type, point_tag>, pointT>::type
 add_point_v(const pointT& lhs, const pointT& rhs)
     BOOST_NOEXCEPT_IF(
         noexcept(detail::add_point_impl<pointT, dimension_of<pointT>::value
@@ -211,7 +211,7 @@ add_point_v(const pointT& lhs, const pointT& rhs)
 
 template<typename pointT>
 BOOST_FORCEINLINE
-boost::enable_if<boost::is_same<tag<pointT>::type, point_tag>, void>::type
+typename boost::enable_if<boost::is_same<typename tag<pointT>::type, point_tag>, void>::type
 add_point(pointT& lhs, const pointT& rhs)
     BOOST_NOEXCEPT_IF(
         noexcept(detail::add_point_impl<pointT, dimension_of<pointT>::value
@@ -224,7 +224,7 @@ add_point(pointT& lhs, const pointT& rhs)
 
 template<typename pointT>
 BOOST_FORCEINLINE
-boost::enable_if<boost::is_same<tag<pointT>::type, point_tag>, pointT>::type
+typename boost::enable_if<boost::is_same<typename tag<pointT>::type, point_tag>, pointT>::type
 sub_point_v(const pointT& lhs, const pointT& rhs)
     BOOST_NOEXCEPT_IF(
         noexcept(detail::sub_point_impl<pointT, dimension_of<pointT>::value
@@ -238,7 +238,7 @@ sub_point_v(const pointT& lhs, const pointT& rhs)
 
 template<typename pointT>
 BOOST_FORCEINLINE
-boost::enable_if<boost::is_same<tag<pointT>::type, point_tag>, void>::type
+typename boost::enable_if<boost::is_same<typename tag<pointT>::type, point_tag>, void>::type
 sub_point(pointT& lhs, const pointT& rhs)
     BOOST_NOEXCEPT_IF(
         noexcept(detail::sub_point_impl<pointT, dimension_of<pointT>::value
@@ -251,7 +251,7 @@ sub_point(pointT& lhs, const pointT& rhs)
 
 template<typename pointT>
 BOOST_FORCEINLINE
-boost::enable_if<boost::is_same<tag<pointT>::type, point_tag>, pointT>::type
+typename boost::enable_if<boost::is_same<typename tag<pointT>::type, point_tag>, pointT>::type
 mul_point_v(const pointT& lhs, const pointT& rhs)
     BOOST_NOEXCEPT_IF(
         noexcept(detail::mul_point_impl<pointT, dimension_of<pointT>::value
@@ -265,7 +265,7 @@ mul_point_v(const pointT& lhs, const pointT& rhs)
 
 template<typename pointT>
 BOOST_FORCEINLINE
-boost::enable_if<boost::is_same<tag<pointT>::type, point_tag>, void>::type
+typename boost::enable_if<boost::is_same<typename tag<pointT>::type, point_tag>, void>::type
 mul_point(pointT& lhs, const pointT& rhs)
     BOOST_NOEXCEPT_IF(
         noexcept(detail::mul_point_impl<pointT, dimension_of<pointT>::value
@@ -278,7 +278,7 @@ mul_point(pointT& lhs, const pointT& rhs)
 
 template<typename pointT>
 BOOST_FORCEINLINE
-boost::enable_if<boost::is_same<tag<pointT>::type, point_tag>, pointT>::type
+typename boost::enable_if<boost::is_same<typename tag<pointT>::type, point_tag>, pointT>::type
 mul_point_v(const pointT& lhs, const typename coordinate_type_of<pointT>::type rhs)
     BOOST_NOEXCEPT_IF(
         noexcept(detail::mul_point_impl<pointT, dimension_of<pointT>::value
@@ -293,7 +293,7 @@ mul_point_v(const pointT& lhs, const typename coordinate_type_of<pointT>::type r
 
 template<typename pointT>
 BOOST_FORCEINLINE
-boost::enable_if<boost::is_same<tag<pointT>::type, point_tag>, void>::type
+typename boost::enable_if<boost::is_same<typename tag<pointT>::type, point_tag>, void>::type
 mul_point(pointT& lhs, const typename coordinate_type_of<pointT>::type rhs)
     BOOST_NOEXCEPT_IF(
         noexcept(detail::mul_point_impl<pointT, dimension_of<pointT>::value
@@ -308,7 +308,7 @@ mul_point(pointT& lhs, const typename coordinate_type_of<pointT>::type rhs)
 
 template<typename pointT>
 BOOST_FORCEINLINE
-boost::enable_if<boost::is_same<tag<pointT>::type, point_tag>, pointT>::type
+typename boost::enable_if<boost::is_same<typename tag<pointT>::type, point_tag>, pointT>::type
 div_point_v(const pointT& lhs, const pointT& rhs)
     BOOST_NOEXCEPT_IF(
         noexcept(detail::div_point_impl<pointT, dimension_of<pointT>::value
@@ -322,7 +322,7 @@ div_point_v(const pointT& lhs, const pointT& rhs)
 
 template<typename pointT>
 BOOST_FORCEINLINE
-boost::enable_if<boost::is_same<tag<pointT>::type, point_tag>, void>::type
+typename boost::enable_if<boost::is_same<typename tag<pointT>::type, point_tag>, void>::type
 div_point(pointT& lhs, const pointT& rhs)
     BOOST_NOEXCEPT_IF(
         noexcept(detail::div_point_impl<pointT, dimension_of<pointT>::value
@@ -335,7 +335,7 @@ div_point(pointT& lhs, const pointT& rhs)
 
 template<typename pointT>
 BOOST_FORCEINLINE
-boost::enable_if<boost::is_same<tag<pointT>::type, point_tag>, pointT>::type
+typename boost::enable_if<boost::is_same<typename tag<pointT>::type, point_tag>, pointT>::type
 div_point_v(const pointT& lhs, const typename coordinate_type_of<pointT>::type rhs)
     BOOST_NOEXCEPT_IF(
         noexcept(detail::div_point_impl<pointT, dimension_of<pointT>::value
@@ -350,7 +350,7 @@ div_point_v(const pointT& lhs, const typename coordinate_type_of<pointT>::type r
 
 template<typename pointT>
 BOOST_FORCEINLINE
-boost::enable_if<boost::is_same<tag<pointT>::type, point_tag>, void>::type
+typename boost::enable_if<boost::is_same<typename tag<pointT>::type, point_tag>, void>::type
 div_point(pointT& lhs, const typename coordinate_type_of<pointT>::type rhs)
     BOOST_NOEXCEPT_IF(
         noexcept(detail::div_point_impl<pointT, dimension_of<pointT>::value
