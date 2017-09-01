@@ -2,7 +2,13 @@
 #define PERIOR_TREE_BOUNDARY_CONDITION_HPP
 #include <periortree/config.hpp>
 #include <periortree/point_traits.hpp>
+
+#if BOOST_VERSION >= 105600
+#include <boost/core/enable_if.hpp>
+#else
 #include <boost/utility/enable_if.hpp>
+#endif
+
 #include <boost/type_traits/is_same.hpp>
 #include <boost/static_assert.hpp>
 
