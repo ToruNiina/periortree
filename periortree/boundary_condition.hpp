@@ -85,9 +85,9 @@ struct cubic_periodic_boundary
         noexcept(std::is_nothrow_move_constructible<point_type>::value)
         : lower_(std::move(lhs)), upper_(std::move(rhs))
     {}
-    cubic_periodic_boundary()
+    cubic_periodic_boundary(cubic_periodic_boundary&&)
         noexcept(std::is_nothrow_move_constructible<point_type>::value) = default;
-    cubic_periodic_boundary& operator=()
+    cubic_periodic_boundary& operator=(cubic_periodic_boundary&&)
         noexcept(std::is_nothrow_move_constructible<point_type>::value) = default;
 #endif
 
