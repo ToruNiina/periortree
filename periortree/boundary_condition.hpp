@@ -2,6 +2,7 @@
 #define PERIOR_TREE_BOUNDARY_CONDITION_HPP
 #include <periortree/config.hpp>
 #include <periortree/point_traits.hpp>
+#include <periortree/aabb_traits.hpp>
 
 #if BOOST_VERSION >= 105600
 #include <boost/core/enable_if.hpp>
@@ -59,7 +60,7 @@ struct cubic_periodic_boundary
     BOOST_STATIC_ASSERT_MSG(
         (boost::is_same<typename traits::tag<pointT>::type,
                         traits::point_tag>::value),
-        "perior::unlimited_boundary: pointT must be tagged as point_type");
+        "perior::cubic_periodic_boundary: pointT must be tagged as point_type");
 
     typedef pointT   point_type;
     typedef typename traits::coordinate_type_of<point_type>::type coordinate_type;
@@ -90,14 +91,106 @@ struct cubic_periodic_boundary
         noexcept(std::is_nothrow_move_constructible<point_type>::value) = default;
 #endif
 
+    BOOST_FORCEINLINE
     point_type&       lower()       BOOST_NOEXCEPT_OR_NOTHROW {return lower_;}
+    BOOST_FORCEINLINE
     point_type&       upper()       BOOST_NOEXCEPT_OR_NOTHROW {return upper_;}
+    BOOST_FORCEINLINE
     point_type const& lower() const BOOST_NOEXCEPT_OR_NOTHROW {return lower_;}
+    BOOST_FORCEINLINE
     point_type const& upper() const BOOST_NOEXCEPT_OR_NOTHROW {return upper_;}
 
   private:
     point_type lower_, upper_;
 };
+
+// access and motify cubic_periodic_boundary in the same way as aabb
+namespace traits
+{
+template<typename T>
+struct tag<cubic_periodic_boundary<T> > {typedef aabb_tag type;};
+template<typename T>
+struct point_type_of<cubic_periodic_boundary<T> >{typedef T type;};
+template<typename T>
+struct coordinate_type_of<cubic_periodic_boundary<T> >
+{typedef typename coordinate_type_of<T>::type type;};
+template<typename T>
+struct dimension_of<cubic_periodic_boundary<T> >
+: dimension_of<typename point_type_of<cubic_periodic_boundary<T> >::type>{};
+
+template<typename T, std::size_t D>
+struct box_access<cubic_periodic_boundary<T>, max_corner, D>
+{
+    typedef cubic_periodic_boundary<T> box_type;
+    typedef typename point_type_of<box_type>::type point_type;
+    typedef typename coordinate_type_of<box_type>::type coordinate_type;
+
+    BOOST_FORCEINLINE
+    static coordinate_type get(const box_type& b)
+        BOOST_NOEXCEPT_IF(noexcept(point_access<point_type, D>::get(
+            std::declval<point_type>(), std::declval<coordinate_type>()))
+        )
+    {
+        return point_access<point_type, D>::get(b.upper());
+    }
+
+    BOOST_FORCEINLINE
+    static void set(box_type& b, coordinate_type x)
+        BOOST_NOEXCEPT_IF(noexcept(point_access<point_type, D>::set(
+            std::declval<point_type&>(), std::declval<coordinate_type>()))
+        )
+    {
+        return point_access<point_type, D>::set(b.upper(), x);
+    }
+};
+
+template<typename T, std::size_t D>
+struct box_access<cubic_periodic_boundary<T>, min_corner, D>
+{
+    typedef cubic_periodic_boundary<T> box_type;
+    typedef typename point_type_of<box_type>::type      point_type;
+    typedef typename coordinate_type_of<box_type>::type coordinate_type;
+
+    BOOST_FORCEINLINE
+    static coordinate_type get(const box_type& b)
+        BOOST_NOEXCEPT_IF(noexcept(point_access<point_type, D>::get(
+            std::declval<point_type>(), std::declval<coordinate_type>()))
+        )
+    {
+        return point_access<point_type, D>::get(b.lower());
+    }
+
+    BOOST_FORCEINLINE
+    static void set(box_type& b, coordinate_type x)
+        BOOST_NOEXCEPT_IF(noexcept(point_access<point_type, D>::set(
+            std::declval<point_type&>(), std::declval<coordinate_type>()))
+        )
+    {
+        return point_access<point_type, D>::set(b.lower(), x);
+    }
+};
+
+template<typename T, std::size_t D>
+struct box_range_access<cubic_periodic_boundary<T>, D>
+{
+    typedef cubic_periodic_boundary<T> box_type;
+    typedef typename point_type_of<box_type>::type      point_type;
+    typedef typename coordinate_type_of<box_type>::type coordinate_type;
+
+    BOOST_FORCEINLINE
+    static coordinate_type get(const box_type& b)
+        BOOST_NOEXCEPT_IF(
+            noexcept(point_access<point_type, D>::get(b.lower)) &&
+            noexcept(std::declval<coordinate_type>() -
+                     std::declval<coordinate_type>())
+        )
+    {
+        return point_access<point_type, D>::get(b.upper) -
+               point_access<point_type, D>::get(b.lower);
+    }
+};
+
+} // traits
 
 namespace detail
 {
