@@ -19,7 +19,7 @@ struct aabb
     aabb() {}
     ~aabb(){}
 
-    aabb(const aabb& rhs) : upper(rhs.upper), lower(rhs.lower) {}
+    aabb(const aabb& rhs) : lower(rhs.lower), upper(rhs.upper){}
     aabb& operator=(const aabb& rhs)
     {
         upper = rhs.upper;
@@ -27,7 +27,7 @@ struct aabb
         return *this;
     }
 
-    xyz upper, lower;
+    xyz lower, upper;
 };
 
 }// test
