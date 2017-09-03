@@ -3,6 +3,7 @@ set(TEST_NAMES
     test_boundary
     test_centroid
     test_area
+    test_expand
 )
 
 add_definitions("-O2")
