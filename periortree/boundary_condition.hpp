@@ -128,8 +128,7 @@ struct box_access<cubic_periodic_boundary<T>, max_corner, D>
     BOOST_FORCEINLINE
     static coordinate_type get(const box_type& b)
         BOOST_NOEXCEPT_IF(noexcept(point_access<point_type, D>::get(
-            std::declval<point_type>(), std::declval<coordinate_type>()))
-        )
+            std::declval<point_type>())))
     {
         return point_access<point_type, D>::get(b.upper());
     }
@@ -137,8 +136,7 @@ struct box_access<cubic_periodic_boundary<T>, max_corner, D>
     BOOST_FORCEINLINE
     static void set(box_type& b, coordinate_type x)
         BOOST_NOEXCEPT_IF(noexcept(point_access<point_type, D>::set(
-            std::declval<point_type&>(), std::declval<coordinate_type>()))
-        )
+            std::declval<point_type&>(), std::declval<coordinate_type>())))
     {
         return point_access<point_type, D>::set(b.upper(), x);
     }
@@ -154,8 +152,7 @@ struct box_access<cubic_periodic_boundary<T>, min_corner, D>
     BOOST_FORCEINLINE
     static coordinate_type get(const box_type& b)
         BOOST_NOEXCEPT_IF(noexcept(point_access<point_type, D>::get(
-            std::declval<point_type>(), std::declval<coordinate_type>()))
-        )
+            std::declval<point_type>())))
     {
         return point_access<point_type, D>::get(b.lower());
     }
@@ -163,8 +160,7 @@ struct box_access<cubic_periodic_boundary<T>, min_corner, D>
     BOOST_FORCEINLINE
     static void set(box_type& b, coordinate_type x)
         BOOST_NOEXCEPT_IF(noexcept(point_access<point_type, D>::set(
-            std::declval<point_type&>(), std::declval<coordinate_type>()))
-        )
+            std::declval<point_type&>(), std::declval<coordinate_type>())))
     {
         return point_access<point_type, D>::set(b.lower(), x);
     }
@@ -182,8 +178,7 @@ struct box_range_access<cubic_periodic_boundary<T>, D>
         BOOST_NOEXCEPT_IF(
             noexcept(point_access<point_type, D>::get(b.lower())) &&
             noexcept(std::declval<coordinate_type>() -
-                     std::declval<coordinate_type>())
-        )
+                     std::declval<coordinate_type>()))
     {
         return point_access<point_type, D>::get(b.upper()) -
                point_access<point_type, D>::get(b.lower());
