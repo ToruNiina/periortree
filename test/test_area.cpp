@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE "test_boundary"
+#define BOOST_TEST_MODULE "test_area"
 
 #ifdef UNITTEST_FRAMEWORK_LIBRARY_EXIST
 #include <boost/test/unit_test.hpp>
@@ -25,37 +25,33 @@ BOOST_AUTO_TEST_CASE(test_aabb_unlimited)
     }
 }
 
-// BOOST_AUTO_TEST_CASE(test_xyz_cubic_periodic)
-// {
-//     const perior::test::xyz lw(0, 0, 0);
-//     const perior::test::xyz up(1, 1, 1);
-//     const perior::cubic_periodic_boundary<perior::test::xyz> boundary(lw, up);
-//     {
-//         const perior::test::xyz p(0.3, 0.3, 0.3);
-//
-//         const perior::test::xyz ap = adjust_position(p, boundary);
-//         BOOST_CHECK_EQUAL(ap.x, p.x);
-//         BOOST_CHECK_EQUAL(ap.y, p.y);
-//         BOOST_CHECK_EQUAL(ap.z, p.z);
-//         const perior::test::xyz ad = adjust_direction(p, boundary);
-//         BOOST_CHECK_EQUAL(ad.x, p.x);
-//         BOOST_CHECK_EQUAL(ad.y, p.y);
-//         BOOST_CHECK_EQUAL(ad.z, p.z);
-//     }
-//
-//     {
-//         const perior::test::xyz p(1.3, 0.3, 0.3);
-//
-//         const perior::test::xyz ap = adjust_position(p, boundary);
-//         BOOST_CHECK_CLOSE(ap.x, 1.3 - 1.0, 1e-10);
-//         BOOST_CHECK_EQUAL(ap.y, p.y);
-//         BOOST_CHECK_EQUAL(ap.z, p.z);
-//     }
-//     {
-//         const perior::test::xyz p(0.6, 0.3, 0.3);
-//         const perior::test::xyz ad = adjust_direction(p, boundary);
-//         BOOST_CHECK_CLOSE(ad.x, 0.6 - 1.0, 1e-10);
-//         BOOST_CHECK_EQUAL(ad.y, p.y);
-//         BOOST_CHECK_EQUAL(ad.z, p.z);
-//     }
-// }
+BOOST_AUTO_TEST_CASE(test_xyz_cubic_periodic)
+{
+    const perior::test::xyz lw(0., 0., 0.);
+    const perior::test::xyz up(10., 10., 10.);
+    const perior::cubic_periodic_boundary<perior::test::xyz> boundary(lw, up);
+
+    {
+        const perior::test::xyz l(3.0, 3.0, 3.0);
+        const perior::test::xyz u(7.0, 7.0, 7.0);
+        const perior::test::aabb box(l, u);
+        const double area = perior::area(box, boundary);
+        BOOST_CHECK_CLOSE_FRACTION(area, 64.0, 1e-12);
+    }
+
+    {
+        const perior::test::xyz l(8.0, 8.0, 8.0);
+        const perior::test::xyz u(2.0, 2.0, 2.0);
+        const perior::test::aabb box(l, u);
+        const double area = perior::area(box, boundary);
+        BOOST_CHECK_CLOSE_FRACTION(area, 64.0, 1e-12);
+    }
+
+    {
+        const perior::test::xyz l(8.0, 4.0, 8.0);
+        const perior::test::xyz u(2.0, 8.0, 2.0);
+        const perior::test::aabb box(l, u);
+        const double area = perior::area(box, boundary);
+        BOOST_CHECK_CLOSE_FRACTION(area, 64.0, 1e-12);
+    }
+}
