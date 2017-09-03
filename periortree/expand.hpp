@@ -87,7 +87,6 @@ struct expand_impl<
     }
 };
 
-
 template<typename boxT, std::size_t I>
 struct expand_impl<
     boxT, cubic_periodic_boundary<typename traits::point_type_of<boxT>::type>, I>
@@ -242,10 +241,9 @@ typename boost::enable_if<
     boost::is_same<typename traits::tag<boxT>::type, traits::aabb_tag>, void
     >::type
 expand(boxT& box, const boxT& entry, const boundaryT& bd)
-    BOOST_NOEXCEPT_IF(noexcept(detail::expand_impl<
-            typename traits::point_type_of<boxT>::type,
+    BOOST_NOEXCEPT_IF(noexcept(detail::expand_impl<boxT, boundaryT,
             traits::dimension_of<typename traits::point_type_of<boxT>::type>::value
-        >::invoke(1, bx, bd)))
+        >::invoke(box, entry, bd)))
 {
     detail::expand_impl<boxT, boundaryT,
         traits::dimension_of<typename traits::point_type_of<boxT>::type>::value
