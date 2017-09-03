@@ -1,7 +1,7 @@
 set(TEST_NAMES
     test_point
     test_boundary
-    test_aabb
+    test_area
 )
 
 add_definitions("-O2")
