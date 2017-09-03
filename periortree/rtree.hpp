@@ -5,6 +5,9 @@
 #include <periortree/area.hpp>
 #include <periortree/rtree_node.hpp>
 
+#include <boost/preprocessor/repetition/enum_params.hpp>
+#include <boost/preprocessor/repetition/repeat_from_to.hpp>
+#include <boost/preprocessor/facilities/empty.hpp>
 #include <boost/container/vector.hpp>
 #include <boost/container/small_vector.hpp>
 #include <boost/tuples/tuple.hpp>
@@ -17,33 +20,103 @@
 namespace perior
 {
 
+namespace detail
+{
+template<typename T>
+struct indexable_type_of
+{
+    typedef T type;
+
+    BOOST_FORCEINLINE static type const& invoke(T const& v) {return v;}
+    BOOST_FORCEINLINE static type&       invoke(T& v)       {return v;}
+};
+
+template<typename T1, typename T2>
+struct indexable_type_of<std::pair<T1, T2> >
+{
+    typedef T1 type;
+
+    BOOST_FORCEINLINE static
+    type const& invoke(std::pair<T1, T2> const& v) {return v.first;}
+    BOOST_FORCEINLINE static
+    type&       invoke(std::pair<T1, T2>& v)       {return v.first;}
+};
+
+#ifdef PERIOR_TREE_ENABLE_CXX11
+
+template<typename T0, typename ...Ts>
+struct indexable_type_of<std::tuple<T0, Ts...>>
+{
+    typedef T0 type;
+    BOOST_FORCEINLINE static
+    type const& invoke(std::tuple<T0, Ts...> const& v) {return std::get<0>(v);}
+    BOOST_FORCEINLINE static
+    type&       invoke(std::tuple<T0, Ts...>& v)       {return std::get<0>(v);}
+};
+
+template<typename T0, typename ...Ts>
+struct indexable_type_of<boost::tuple<T0, Ts...>>
+{
+    typedef T0 type;
+    BOOST_FORCEINLINE static
+    type const& invoke(boost::tuple<T0, Ts...> const& v) {return boost::get<0>(v);}
+    BOOST_FORCEINLINE static
+    type&       invoke(boost::tuple<T0, Ts...>& v)       {return boost::get<0>(v);}
+};
+
+#else // before c++11...
+
+#define PERIOR_TREE_EXPAND_INDEXABLE_TYPE_OF(z, N, dummy)\
+    template<BOOST_PP_ENUM_PARAMS(N, typename T)>\
+    struct indexable_type_of<boost::tuple<BOOST_PP_ENUM_PARAMS(N, T)> >\
+    {\
+        typedef T0 type;\
+        BOOST_FORCEINLINE static\
+        type const& invoke(boost::tuple<T0, Ts...> const& v)\
+        {return boost::get<0>(v);}\
+        BOOST_FORCEINLINE static\
+        type&       invoke(boost::tuple<T0, Ts...>& v)\
+        {return boost::get<0>(v);}\
+    };\
+    /**/
+
+BOOST_PP_REPEAT_FROM_TO(1, 10, PERIOR_TREE_EXPAND_INDEXABLE_TYPE_OF, BOOST_PP_EMPTY)
+
+#undef PERIOR_TREE_EXPAND_INDEXABLE_TYPE_OF
+#endif//PERIOR_TREE_ENABLE_CXX11
+} // detail
+
+//XXX: TODO now implemented quadratic algorithm only...
 template<typename std::size_t Min, std::size_t Max>
 struct quadratic
 {
     static BOOST_CONSTEXPR_OR_CONST std::size_t min_elem = Min;
     static BOOST_CONSTEXPR_OR_CONST std::size_t max_elem = Max;
-    // now implemented quadratic algorithm only...
     // split_node();
 };
 
-template<typename T, typename Params, typename ToAABB, typename Boundary,
+// T = AABB or std::pair<AABB, T> or boost::tuple<AABB, T1, T2, ...>
+template<typename T, typename Params, typename Boundary,
          typename EqualTo   = std::equal_to<T>,
          typename Allocator = std::allocator<T> >
 class rtree
 {
   public:
-    typedef T         entry_type;
+    typedef T         value_type;
     typedef Params    parameter_type;
-    typedef ToAABB    to_aabb_type;
     typedef Boundary  boundary_type;
     typedef EqualTo   equal_to_type;
     typedef Allocator allocator_type;
 
-    typedef typename to_aabb::box_type                          box_type;
-    typedef typename traits::point_type_of<box_type>::type      point_type;
-    typedef typename traits::coordinate_type_of<box_type>::type coordinate_type;
+    //TODO now {indexable_type} is aabb only. point is not indexable.
+    typedef detail::indexable_type_of<value_type> indexable_t;
+    typedef typename indexable_t::type indexable_type;
+    BOOST_STATIC_ASSERT_MSG((boost::is_same<traits::aabb_tag,
+        typename traits::tag<indexable_type>::type>::value),
+        "rtree element type must have an indexable type.")
+    typedef typename traits::point_type_of<indexable_type>::type      point_type;
+    typedef typename traits::coordinate_type_of<indexable_type>::type coordinate_type;
 
-    typedef std::pair<box_type, entry_type> value_type;
     typedef boost::container::vector<value_type, allocator_type> container_type;
     typedef typename container_type::iterator       iterator;
     typedef typename container_type::const_iterator const_iterator;
@@ -52,7 +125,7 @@ class rtree
     static BOOST_CONSTEXPR_OR_CONST std::size_t min_entry = parameter_type::min_elem;
     static BOOST_CONSTEXPR_OR_CONST std::size_t max_entry = parameter_type::max_elem;
 
-    typedef detail::rtree_node<box_type, min_entry, max_entry> node_type;
+    typedef detail::rtree_node<indexable_type, min_entry, max_entry> node_type;
     typedef typename node_type::internal_node_type         internal_node_type;
     typedef typename node_type::leaf_node_type             leaf_node_type;
     typedef boost::container::vector<node_type>            tree_type;
@@ -64,10 +137,10 @@ class rtree
     explicit rtree(const boundary_type& b): root_(NIL), boundary_(b){}
     ~rtree(){};
 
-    void insert(const entry_type& v)
+    void insert(const value_type& v)
     {
-        const std::size_t idx = container_.size();
-        const box_type    box = to_aabb::invoke(v);
+        const std::size_t    idx = container_.size();
+        const indexable_type box = indexable_t::invoke(v);
 
         container_.push_back(std::make_pair(box, v));
 
@@ -84,7 +157,7 @@ class rtree
         }
         return;
     }
-    void remove(const entry_type& v)
+    void remove(const value_type& v)
     {
         typedef std::pair<leaf_node_type&, leaf_node_type::entry_iterator>
                 found_leaf_node_type;
@@ -141,33 +214,21 @@ class rtree
         for(typename internal_node_type::children_iterator
             i(internal.children.begin()), e(internal.children.end()); i != e; ++i)
         {
-            const box_type&  EI  = this->tree_.at(*i).box();
-            const coord_type da_ = calc_area_enlargement(EI, bx);
-            if(da_ < darea)
+            const box_type&  EI      = this->tree_.at(*i).box();
+            const coord_type area_EI = area(EI, this->boundary_);
+            box_type expanded(EI);
+            expand(expanded, bx, this->boundary_);
+            const coord_tyep area_expanded = area(expanded, boundary_);
+            const coord_type da_ = area_expanded - area_EI;
+
+            if(da_ < darea || (da_ == darea && area_expanded < area))
             {
                 F     = *i;
                 darea = da_;
-                area  = calc_area(EI);
-            }
-            else if(da_ == darea) // unlikely
-            {
-                const coord_type a_ = calc_area(EI);
-                if(a_ < area)
-                {
-                    F     = *i;
-                    darea = da_;
-                    area  = calc_area(EI);
-                }
+                area  = area_expanded;
             }
         }
         return choose_leaf_impl(this->tree_.at(F), bx);
-    }
-
-    coordinate_type
-    calc_area_enlargement(const box_type& bx, const box_type& entry)
-    {
-        box_type expanded(bx); expand(expanded, entry, boundary_);
-        return area(expanded, boundary_) - area(bx, boundary_);
     }
 
     boost::optional<std::pair<leaf_node_type&,
@@ -223,7 +284,6 @@ class rtree
   private:
 
     std::size_t       root_;
-    to_aabb_type      to_aabb_;
     equal_to_type     equal_to_;
     boundary_type     boundary_;
     tree_type         tree_;
