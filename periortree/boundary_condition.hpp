@@ -180,13 +180,13 @@ struct box_range_access<cubic_periodic_boundary<T>, D>
     BOOST_FORCEINLINE
     static coordinate_type get(const box_type& b)
         BOOST_NOEXCEPT_IF(
-            noexcept(point_access<point_type, D>::get(b.lower)) &&
+            noexcept(point_access<point_type, D>::get(b.lower())) &&
             noexcept(std::declval<coordinate_type>() -
                      std::declval<coordinate_type>())
         )
     {
-        return point_access<point_type, D>::get(b.upper) -
-               point_access<point_type, D>::get(b.lower);
+        return point_access<point_type, D>::get(b.upper()) -
+               point_access<point_type, D>::get(b.lower());
     }
 };
 
