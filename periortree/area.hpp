@@ -102,11 +102,9 @@ typename boost::enable_if<
          >::type
 area(const boxT& bx, const boundaryT& bd)
     BOOST_NOEXCEPT_IF(noexcept(detail::area_impl<boxT, boundaryT,
-            traits::dimension_of<typename traits::point_type_of<boxT>::type>::value
-        >::invoke(1, bx, bd)))
+            traits::dimension_of<boxT>::value>::invoke(1, bx, bd)))
 {
-    return detail::area_impl<boxT, boundaryT,
-        traits::dimension_of<typename traits::point_type_of<boxT>::type>::value
+    return detail::area_impl<boxT, boundaryT, traits::dimension_of<boxT>::value
             >::invoke(1, bx, bd);
 }
 
