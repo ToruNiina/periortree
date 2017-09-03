@@ -197,6 +197,23 @@ namespace detail
 
 // adjust position -------------------------------------------------------------
 
+template<typename coordT>
+BOOST_FORCEINLINE
+coordT adjust_position_1D(coordT x, const coordT mn, const coordT mx)
+    BOOST_NOEXCEPT_OR_NOTHROW
+{
+    const coordT range = mx - mn;
+    if(x < mn)
+    {
+        x += range;
+    }
+    else if(x > mx)
+    {
+        x -= range;
+    }
+    return x;
+}
+
 template<typename pointT, std::size_t I>
 struct adjust_position_impl
 {
@@ -239,6 +256,22 @@ struct adjust_position_impl<pointT, 0>
 
 // adjust direction ------------------------------------------------------------
 
+template<typename coordT>
+BOOST_FORCEINLINE
+coordT adjust_direction_1D(coordT dx, const coordT range) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    const coordT range_half = range / 2;
+    if(dx < -range_half)
+    {
+        dx += range;
+    }
+    else if(dx > range_half)
+    {
+        dx -= range;
+    }
+    return dx;
+}
+
 template<typename pointT, std::size_t I>
 struct adjust_direction_impl
 {
@@ -248,23 +281,23 @@ struct adjust_direction_impl
     // dsh = ds / 2
     BOOST_FORCEINLINE
     static void
-    invoke(pointT& p, const pointT& ds, const pointT& dsh)
+    invoke(pointT& d, const pointT& ds, const pointT& dsh)
         BOOST_NOEXCEPT_IF(
-            noexcept(access::get(p)) &&
-            noexcept(access::set(p, std::declval<coordinate_type>()))
+            noexcept(access::get(d)) &&
+            noexcept(access::set(d, std::declval<coordinate_type>()))
         )
     {
-        const coordinate_type x = access::get(p);
+        const coordinate_type x = access::get(d);
 
         if(x < -access::get(dsh))
         {
-            access::set(p, x + access::get(ds));
+            access::set(d, x + access::get(ds));
         }
         else if(x > access::get(dsh))
         {
-            access::set(p, x - access::get(ds));
+            access::set(d, x - access::get(ds));
         }
-        return adjust_direction_impl<pointT, I-1>::invoke(p, ds, dsh);
+        return adjust_direction_impl<pointT, I-1>::invoke(d, ds, dsh);
     }
 };
 
@@ -273,7 +306,7 @@ struct adjust_direction_impl<pointT, 0>
 {
     BOOST_FORCEINLINE
     static void
-    invoke(pointT& p, const pointT& ds, const pointT& dsh)
+    invoke(pointT& d, const pointT& ds, const pointT& dsh)
         BOOST_NOEXCEPT_OR_NOTHROW
     {
         return;
