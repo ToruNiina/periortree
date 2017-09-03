@@ -18,16 +18,17 @@ struct area_impl<
     typedef boxT box_type;
     typedef typename traits::point_type_of<box_type>::type        point_type;
     typedef typename traits::coordinate_type_of<point_type>::type coordinate_type;
-    typedef traits::box_range_access<box_type, I-1> access_range;
     typedef unlimited_boundary<point_type>  boundary_type;
+    typedef traits::box_range_access<box_type, I-1>      access_bx_range;
+    typedef traits::box_range_access<boundary_type, I-1> access_bd_range;
 
     BOOST_FORCEINLINE
     static coordinate_type
     invoke(coordinate_type a, const box_type& bx, const boundary_type& bd)
-        BOOST_NOEXCEPT_IF(noexcept(access_range::get(std::declval<box_type>())))
+        BOOST_NOEXCEPT_IF(noexcept(access_bx_range::get(std::declval<box_type>())))
     {
         return area_impl<box_type, boundary_type, I-1>::invoke(
-                a * access_range::get(bx), bx, bd);
+                a * access_bx_range::get(bx), bx, bd);
     }
 };
 
@@ -56,22 +57,23 @@ struct area_impl<
     typedef boxT box_type;
     typedef typename traits::point_type_of<box_type>::type        point_type;
     typedef typename traits::coordinate_type_of<point_type>::type coordinate_type;
+    typedef cubic_periodic_boundary<point_type>  boundary_type;
     typedef traits::box_access<box_type, traits::max_corner, I-1> access_max;
     typedef traits::box_access<box_type, traits::min_corner, I-1> access_min;
-    typedef traits::box_range_access<box_type, I-1>       access_range;
-    typedef cubic_periodic_boundary<point_type>   boundary_type;
+    typedef traits::box_range_access<box_type, I-1>      access_bx_range;
+    typedef traits::box_range_access<boundary_type, I-1> access_bd_range;
 
     BOOST_FORCEINLINE
     static coordinate_type
     invoke(coordinate_type a, const box_type& bx, const boundary_type& bd)
         BOOST_NOEXCEPT_IF(
-            noexcept(access_range::get(std::declval<box_type>())) &&
-            noexcept(access_range::get(std::declval<boundary_type>()))
+            noexcept(access_bx_range::get(std::declval<box_type>())) &&
+            noexcept(access_bd_range::get(std::declval<boundary_type>()))
             )
     {
-        const coordinate_type dx = access_range::get(bx);
+        const coordinate_type dx = access_bx_range::get(bx);
         return area_impl<box_type, boundary_type, I-1>::invoke(
-                a * (dx >= 0 ? dx : dx + access_range::get(bd)), bx, bd);
+                a * (dx >= 0 ? dx : dx + access_bd_range::get(bd)), bx, bd);
     }
 };
 
@@ -98,8 +100,7 @@ template<typename boxT, typename boundaryT>
 inline
 typename boost::enable_if<
     boost::is_same<typename traits::tag<boxT>::type, traits::aabb_tag>,
-    typename traits::coordinate_type_of<typename traits::point_type_of<boxT>::type>::type
-         >::type
+    typename traits::coordinate_type_of<boxT>::type>::type
 area(const boxT& bx, const boundaryT& bd)
     BOOST_NOEXCEPT_IF(noexcept(detail::area_impl<boxT, boundaryT,
             traits::dimension_of<boxT>::value>::invoke(1, bx, bd)))
