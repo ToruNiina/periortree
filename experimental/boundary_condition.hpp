@@ -9,7 +9,7 @@ namespace perior
 template<typename realT, std::size_t N>
 struct unlimited_boundary
 {
-    typedef T value_type;
+    typedef realT value_type;
     typedef value_type scalar_type;
     constexpr static std::size_t dim = N;
 };
@@ -28,7 +28,7 @@ adjust_direction(point<T, N> x, const unlimited_boundary<T, N>& b) noexcept
     return x;
 }
 
-template<typename T>
+template<typename T, std::size_t N>
 inline point<T, N>
 span(const point<T, N>& lw, const point<T, N>& up,
      const unlimited_boundary<T, N>& b) noexcept
@@ -39,7 +39,7 @@ span(const point<T, N>& lw, const point<T, N>& up,
 template<typename realT, std::size_t N>
 struct cubic_periodic_boundary
 {
-    typedef T value_type;
+    typedef realT value_type;
     typedef value_type scalar_type;
     constexpr static std::size_t dim = N;
     typedef point<scalar_type, dim> point_type;
@@ -99,7 +99,7 @@ adjust_direction(point<T, N> x, const cubic_periodic_boundary<T, N>& b) noexcept
     return x;
 }
 
-template<typename T>
+template<typename T, std::size_t N>
 inline point<T, N>
 span(const point<T, N>& lw, const point<T, N>& up,
      const cubic_periodic_boundary<T, N>& b) noexcept
