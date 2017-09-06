@@ -8,7 +8,7 @@ namespace perior
 template<typename realT, std::size_t N>
 struct aabb
 {
-    typedef T value_type;
+    typedef realT value_type;
     typedef value_type scalar_type;
     constexpr static std::size_t dim = N;
     typedef point<scalar_type, dim> point_type;
