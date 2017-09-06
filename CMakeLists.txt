@@ -8,5 +8,5 @@ add_definitions("-pedantic -Wall")
 set(STANDARD_VERSION "-std=c++98" CACHE STRING "available version: -std=c++XX")
 add_definitions(${STANDARD_VERSION})
 
-
+add_subdirectory(src)
 add_subdirectory(test)
