@@ -23,13 +23,13 @@ struct rtree_node
     static constexpr std::size_t min_entry = Min;
 
     typedef boost::container::static_vector<std::size_t, Max> container_type;
-    typedef container_type::iterator       iterator;
-    typedef container_type::const_iterator const_iterator;
+    typedef typename container_type::iterator       iterator;
+    typedef typename container_type::const_iterator const_iterator;
 
-    node(const bool is_leaf_, const std::size_t parent_)
+    rtree_node(const bool is_leaf_, const std::size_t parent_)
         : is_leaf(is_leaf_), parent(parent_)
     {}
-    ~node(){}
+    ~rtree_node(){}
 
     bool has_enough_storage() const noexcept
     {return this->children.size() < Max;}

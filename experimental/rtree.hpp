@@ -20,16 +20,16 @@ namespace detail
 template<typename T>
 struct indexable_type_of
 {
-    typedef typename std::tuple_element<T, 0>::type type;
+    typedef typename std::tuple_element<0, T>::type type;
 
     static inline type const&
-    invoke(const value_type& t) noexcept {return std::get<0>(t);}
+    invoke(const T& t) noexcept {return std::get<0>(t);}
 
     static inline type&
-    invoke(value_type& t)       noexcept {return std::get<0>(t);}
+    invoke(T& t)       noexcept {return std::get<0>(t);}
 
     static inline type&&
-    invoke(value_type&& t)      noexcept {return std::get<0>(t);}
+    invoke(T&& t)      noexcept {return std::get<0>(t);}
 };
 } // detail
 
@@ -39,6 +39,18 @@ struct quadratic
     static constexpr std::size_t min_elem = Min;
     static constexpr std::size_t max_elem = Max;
 };
+
+template<typename T, std::size_t N>
+aabb<T, N> make_aabb(const aabb<T, N>& b) noexcept
+{
+    return b;
+}
+
+template<typename T, std::size_t N>
+aabb<T, N> make_aabb(const point<T, N>& p) noexcept
+{
+    return aabb<T, N>(p, p);
+}
 
 template<typename T,
          typename Params,
@@ -114,7 +126,7 @@ class rtree
         if(tree_.at(L).has_enough_storage())
         {
             tree_.at(L).entry.push_back(idx);
-            expand(L.box, entry, b);
+            expand(tree_.at(L).box, entry, this->boundary_);
             this->adjust_tree(L);
         }
         else
@@ -130,13 +142,13 @@ class rtree
         {
             return false;
         }
-        if(boost::optional<std::pair<std::size_t, node_type::const_iterator>>
+        if(boost::optional<std::pair<std::size_t, typename node_type::const_iterator>>
                 found = this->find_leaf(this->root_, v))
         {
             const std::size_t node_idx  = found->first;
             const std::size_t value_idx = *(found->second);
             this->tree_.at(node_idx).entries.erase(found->second);
-            this->erase_value(idx);
+            this->erase_value(value_idx);
             this->condense_tree(node_idx);
             return true;
         }
@@ -228,7 +240,7 @@ class rtree
         }
     }
 
-    boost::optional<std::pair<std::size_t, node_type::const_iterator>>
+    boost::optional<std::pair<std::size_t, typename node_type::const_iterator>>
     find_leaf(std::size_t node_idx, const indexable_type& entry) const
     {
         const node_type& node = tree_.at(node_idx);
@@ -249,7 +261,7 @@ class rtree
             for(typename node_type::const_iterator
                     i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
             {
-                boost::optional<std::pair<std::size_t, node_type::const_iterator>
+                boost::optional<std::pair<std::size_t, typename node_type::const_iterator>
                     > found = this->find_leaf(*i, entry);
                 if(found)
                 {
@@ -272,7 +284,7 @@ class rtree
             const std::size_t parent_idx = tree_.at(node_idx).parent;
 
             node_type& parent = tree_.at(parent_idx);
-            node_type::const_iterator found = std::find(
+            typename node_type::const_iterator found = std::find(
                     parent.entry.begin(), parent.entry.end(), node_idx);
             assert(found != parent.entry.end());
             parent.entry.erase(found);
@@ -298,10 +310,10 @@ class rtree
         node_type  partner(true, node.parent);
 
         boost::container::static_vector<std::pair<std::size_t, indexable_type>,
-            Max+1> entries;
+            max_entry+1> entries;
         entries.push_back(std::make_pair(vidx, entry));
 
-        for(node_type::const_iterator
+        for(typename node_type::const_iterator
                 i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
         {
             entries.push_back(std::make_pair(
@@ -367,7 +379,7 @@ class rtree
     // objT should be indexable_type or aabb_type
     template<typename objT>
     std::array<std::size_t, 2> pick_seeds(const boost::container::static_vector<
-            std::pair<std::size_t, objT>, Max+1>& entries)
+            std::pair<std::size_t, objT>, max_entry+1>& entries)
     {
         assert(entries.size() >= 2);
         std::array<std::size_t, 2> retval;
@@ -380,8 +392,8 @@ class rtree
     // objT should be indexable_type or aabb_type
     template<typename objT>
     std::pair<std::size_t, bool> pick_next(const boost::container::static_vector<
-            std::pair<std::size_t, objT>, Max+1>& entries,
-            const box_type& node, const box_type& ptnr)
+            std::pair<std::size_t, objT>, max_entry+1>& entries,
+            const aabb_type& node, const aabb_type& ptnr)
     {
         assert(!entries.size().empty);
         const objT& entry = entries.front().second;
@@ -412,10 +424,10 @@ class rtree
         node_type  partner(false, node.parent); // has no entry
 
         boost::container::static_vector<std::pair<std::size_t, aabb_type>,
-            Max+1> entries;
+            max_entry+1> entries;
         entries.push_back(std::make_pair(NN, entry_node.box));
 
-        for(node_type::const_iterator
+        for(typename node_type::const_iterator
                 i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
         {
             entries.push_back(std::make_pair(*i, tree_.at(*i).box));
@@ -533,7 +545,7 @@ class rtree
         if(tree_.at(L).has_enough_storage())
         {
             tree_.at(L).entry.push_back(N);
-            expand(tree_.at(L).box, entry, b);
+            expand(tree_.at(L).box, entry, this->boundary_);
             this->adjust_tree(L);
         }
         else

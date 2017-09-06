@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <utility>
 #include <array>
+#include <cmath>
 
 namespace perior
 {
@@ -13,9 +14,9 @@ namespace meta
 template<typename ... Ts>
 struct and_{};
 template<typename T>
-struct and_: std::integral_constant<bool, T::value>{};
+struct and_<T>: std::integral_constant<bool, T::value>{};
 template<typename T, typename ...Ts>
-struct and_: std::integral_constant<bool,
+struct and_<T, Ts...>: std::integral_constant<bool,
     (T::value ? and_<Ts...>::value : false)>{};
 } // meta
 
@@ -72,7 +73,7 @@ struct point
         return *this;
     }
 
-    constexpr inline size() const noexcept {return dim;}
+    constexpr inline std::size_t size() const noexcept {return dim;}
 
     scalar_type& operator[](const std::size_t i)       noexcept {return v_[i];}
     scalar_type  operator[](const std::size_t i) const noexcept {return v_[i];}
@@ -87,7 +88,7 @@ template<typename T, std::size_t N>
 inline point<T, N>
 operator+(const point<T, N>& lhs, const point<T, N>& rhs) noexcept
 {
-    point<T> p;
+    point<T, N> p;
     for(std::size_t i=0; i<N; ++i)
     {
         p[i] = lhs[i] + rhs[i];
@@ -98,7 +99,7 @@ template<typename T, std::size_t N>
 inline point<T, N>
 operator-(const point<T, N>& lhs, const point<T, N>& rhs) noexcept
 {
-    point<T> p;
+    point<T, N> p;
     for(std::size_t i=0; i<N; ++i)
     {
         p[i] = lhs[i] - rhs[i];
@@ -109,7 +110,7 @@ template<typename T, std::size_t N>
 inline point<T, N>
 operator*(const point<T, N>& lhs, const T rhs) noexcept
 {
-    point<T> p;
+    point<T, N> p;
     for(std::size_t i=0; i<N; ++i)
     {
         p[i] = lhs[i] * rhs;
@@ -120,7 +121,7 @@ template<typename T, std::size_t N>
 inline point<T, N>
 operator*(const T lhs, const point<T, N>& rhs) noexcept
 {
-    point<T> p;
+    point<T, N> p;
     for(std::size_t i=0; i<N; ++i)
     {
         p[i] = lhs * rhs[i];
@@ -131,7 +132,7 @@ template<typename T, std::size_t N>
 inline point<T, N>
 operator/(const point<T, N>& lhs, const T rhs) noexcept
 {
-    point<T> p;
+    point<T, N> p;
     for(std::size_t i=0; i<N; ++i)
     {
         p[i] = lhs[i] / rhs;
@@ -142,9 +143,9 @@ operator/(const point<T, N>& lhs, const T rhs) noexcept
 template<typename charT, typename traits, typename realT, std::size_t N>
 inline std::basic_ostream<charT, traits>&
 operator<<(std::basic_ostream<charT, traits>& os,
-           const point<realT>& pos)
+           const point<realT, N>& pos)
 {
-    os << "point<" << boost::typeindex::type_id<realT>().pretty_name() << ">(";
+    os << "point<" << boost::typeindex::type_id<realT>().pretty_name() << ", " << N << ">(";
     for(std::size_t i=0; i<N-1; ++i)
     {
         os << pos[i] << ", ";
@@ -177,11 +178,11 @@ dot_product(const point<T, N>& lhs, const point<T, N>& rhs) noexcept
     return retval;
 }
 
-template<typename T>
-inline point<T>
+template<typename T, std::size_t N>
+inline point<T, N>
 cross_product(const point<T, 3>& lhs, const point<T, 3>& rhs) noexcept
 {
-    return point<T>(lhs[1] * rhs[2] - lhs[2] * rhs[1],
+    return point<T, N>(lhs[1] * rhs[2] - lhs[2] * rhs[1],
                     lhs[2] * rhs[0] - lhs[0] * rhs[2],
                     lhs[0] * rhs[1] - lhs[1] * rhs[0]);
 }
@@ -193,9 +194,9 @@ length_sq(const point<T, N>& lhs) noexcept
     return dot_product(lhs, lhs);
 }
 
-template<typename realT>
-inline realT
-length(const point<realT>& lhs) noexcept
+template<typename T, std::size_t N>
+inline T
+length(const point<T, N>& lhs) noexcept
 {
     return std::sqrt(length_sq(lhs));
 }
