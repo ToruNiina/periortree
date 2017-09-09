@@ -3,6 +3,7 @@
 #include "rtree_node.hpp"
 #include "expand.hpp"
 #include "area.hpp"
+#include "dump.hpp"
 #include <boost/container/vector.hpp>
 #include <boost/container/small_vector.hpp>
 #include <boost/optional.hpp>
@@ -125,13 +126,16 @@ class rtree
 
         if(tree_.at(L).has_enough_storage())
         {
+            std::cerr << "node " << L << " has enough storage. insert and expand." << std::endl;
             tree_.at(L).entry.push_back(idx);
             expand(tree_.at(L).box, entry, this->boundary_);
             this->adjust_tree(L);
         }
         else
         {
+            std::cerr << "node " << L << " has no storage." << std::endl;
             const std::size_t LL = this->add_node(this->split_leaf(L, idx, entry));
+            std::cerr << "create new node " << LL << "." << std::endl;
             this->adjust_tree(L, LL);
         }
         return;
@@ -162,10 +166,38 @@ class rtree
         return query_impl(this->root_, q, out);
     }
 
+    template<typename charT, typename traits>
+    std::basic_ostream<charT, traits>&
+    dump(std::basic_ostream<charT, traits>& os) const
+    {
+        std::vector<std::string> colors;
+        colors.push_back("red");
+        colors.push_back("green");
+        colors.push_back("blue");
+        std::size_t idx = 0;
+        for(typename tree_type::const_iterator i(tree_.begin()), e(tree_.end());
+                i != e; ++i)
+        {
+            to_svg(os, i->box, this->boundary_, colors.at(this->level_of(idx) % 3), 5, "none");
+            os << '\n';
+            ++idx;
+        }
+        os << std::flush;
+        return os;
+    }
+
   private:
 
     std::size_t choose_leaf(const indexable_type& entry)
     {
+        if(this->root_ == nil)
+        {
+            node_type n(true, nil);
+            n.box = make_aabb(entry);
+            this->root_ = this->add_node(n);
+            return this->root_;
+        }
+
         std::size_t node_idx = this->root_;
         while(!(this->tree_.at(node_idx).is_leaf))
         {
@@ -177,14 +209,14 @@ class rtree
                     i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
             {
                 aabb_type box = tree_.at(*i).box;
-                const scalar_type area_initial = area(box);
+                const scalar_type area_initial = area(box, this->boundary_);
 
                 expand(box, entry, this->boundary_);
 
-                const scalar_type area_expanded = area(box);
+                const scalar_type area_expanded = area(box, this->boundary_);
                 const scalar_type diff_area     = area_expanded - area_initial;
-                if(diff_area < diff_area_min ||
-                   (diff_area == diff_area_min && area_expanded < area_min))
+                if((diff_area <  diff_area_min) ||
+                   (diff_area == diff_area_min  && area_expanded < area_min))
                 {
                     node_idx = *i;
                     diff_area_min = diff_area;
@@ -211,30 +243,41 @@ class rtree
     {
         if(tree_.at(N).parent == nil) // grow tree taller
         {
+            std::cerr << "node " << N << "has no parent. " << std::endl;
             node_type new_root(false, nil);
             new_root.entry.push_back(N);
             new_root.entry.push_back(NN);
             new_root.box = tree_.at(N).box;
             expand(new_root.box, tree_.at(NN).box, this->boundary_);
             this->root_ = this->add_node(new_root);
+
+            this->tree_.at(N).parent = this->root_;
+            this->tree_.at(NN).parent = this->root_;
+            std::cerr << "adjust_tree: grow tree taller. new root is " << this->root_ << std::endl;
             return;
         }
         else
         {
             const node_type& node    = tree_.at(N);
             const node_type& partner = tree_.at(NN);
+
+            assert(node.parent == partner.parent);
             node_type& parent_ = tree_.at(node.parent);
             expand(parent_.box, node.box, this->boundary_);
+            std::cerr << "adjust_tree(N, NN): parent has " << parent_.entry.size() << "entry." << std::endl;
             if(parent_.has_enough_storage())
             {
+                std::cerr << "storage is enough." << std::endl;
                 expand(parent_.box, partner.box, this->boundary_);
                 parent_.entry.push_back(NN);
                 return this->adjust_tree(node.parent);
             }
             else
             {
+                std::cerr << "storage is not enough." << std::endl;
                 const node_type parent_partner = this->split_node(node.parent, NN);
                 const std::size_t PP = this->add_node(parent_partner);
+                std::cerr << "adjust_tree: split node " << node.parent << " and " << PP << std::endl;
                 return this->adjust_tree(node.parent, PP);
             }
         }
@@ -306,6 +349,8 @@ class rtree
     node_type split_leaf(const std::size_t N,
                          const std::size_t vidx, const indexable_type& entry)
     {
+        std::cerr << "split_leaf" << std::endl;
+
         node_type& node = tree_.at(N);
         node_type  partner(true, node.parent);
 
@@ -322,98 +367,125 @@ class rtree
         node.entry.clear();
         partner.entry.clear(); // for make it sure
 
-        /* assign first 2 entries to node and partner */{
+        /* assign first 2 entries to node and partner */
+        {
             const std::array<std::size_t, 2> seeds = this->pick_seeds(entries);
+            std::cerr << "seeds = {" << seeds[0] << ", " << seeds[1] << "}" << std::endl;
+            std::cerr << "entries.size() = " << entries.size() << std::endl;
                node.entry.push_back(entries.at(seeds[0]).first);
             partner.entry.push_back(entries.at(seeds[1]).first);
 
-               node.box = make_aabb(entries.at(seeds[0]).second);// TODO:
-            partner.box = make_aabb(entries.at(seeds[1]).second);//   make_aabb
+            std::cerr << "clear box" << std::endl;
+               node.box = make_aabb(entries.at(seeds[0]).second);
+            partner.box = make_aabb(entries.at(seeds[1]).second);
 
             // remove them from entries pool
-            entries.erase(entries.begin() + seeds[0]);
-            entries.erase(entries.begin() + seeds[1]);
+            entries.erase(entries.begin() + std::min(seeds[0], seeds[1]));
+            entries.erase(entries.begin() + std::max(seeds[0], seeds[1]) - 1);
         }
 
-        std::size_t    node_requires = node_type::min_entry - 1;
-        std::size_t partner_requires = node_type::min_entry - 1;
+        std::cerr << "start splitting" << std::endl;
         while(!entries.empty())
         {
-            if(node_requires >= entries.size())
+            if(min_entry > node.entry.size() &&
+               min_entry - node.entry.size() >= entries.size())
             {
                 for(auto i(entries.begin()), e(entries.end()); i != e; ++i)
                 {
                     node.entry.push_back(i->first);
-                    expand(node.box, i->second);
+                    expand(node.box, i->second, this->boundary_);
                 }
                 return partner;
             }
-            if(partner_requires >= entries.size())
+            if(min_entry > partner.entry.size() &&
+               min_entry - partner.entry.size() >= entries.size())
             {
                 for(auto i(entries.begin()), e(entries.end()); i != e; ++i)
                 {
                     partner.entry.push_back(i->first);
-                    expand(partner.box, i->second);
+                    expand(partner.box, i->second, this->boundary_);
                 }
                 return partner;
             }
 
             const std::pair<std::size_t, bool> next =
                 this->pick_next(entries, node.box, partner.box);
-            if(next.second) // next is partner
+            if(next.second) // next is for node
             {
+                std::cerr << "next entry " << next.first << " is for node." << std::endl;
                 node.entry.push_back(entries.at(next.first).first);
-                expand(node.box,     entries.at(next.first).second);
+                expand(node.box, entries.at(next.first).second, this->boundary_);
             }
             else // next is for partner
             {
+                std::cerr << "next entry " << next.first << " is for partner." << std::endl;
                 partner.entry.push_back(entries.at(next.first).first);
-                expand(partner.box,     entries.at(next.first).second);
+                expand(partner.box, entries.at(next.first).second, this->boundary_);
             }
             entries.erase(entries.begin() + next.first);
         }
         return partner;
     }
 
-    // now linear algorithm
     // objT should be indexable_type or aabb_type
     template<typename objT>
     std::array<std::size_t, 2> pick_seeds(const boost::container::static_vector<
             std::pair<std::size_t, objT>, max_entry+1>& entries)
     {
         assert(entries.size() >= 2);
+
         std::array<std::size_t, 2> retval;
-        retval[0] = 0;
-        retval[1] = 1;
+
+        scalar_type max_d = 0;
+        for(std::size_t i=0; i<entries.size()-1; ++i)
+        {
+            for(std::size_t j=i+1; j<entries.size(); ++j)
+            {
+                const aabb_type E1I = make_aabb(entries.at(i).second);
+                const aabb_type E2I = make_aabb(entries.at(j).second);
+                aabb_type J = E1I;
+                expand(J, E2I, this->boundary_);
+                const scalar_type d =
+                    area(J, boundary_) - area(E1I, boundary_) - area(E2I, boundary_);
+                if(max_d < std::abs(d))
+                {
+                    max_d = std::abs(d);
+                    retval[0] = i;
+                    retval[1] = j;
+                    std::cerr << "found seeds {" << i << ", " << j << "}" << std::endl;
+                    std::cerr << "max_d = " << max_d << std::endl;
+                }
+            }
+        }
         return retval;
     }
 
-    // now linear algorithm
     // objT should be indexable_type or aabb_type
     template<typename objT>
     std::pair<std::size_t, bool> pick_next(const boost::container::static_vector<
             std::pair<std::size_t, objT>, max_entry+1>& entries,
             const aabb_type& node, const aabb_type& ptnr)
     {
-        assert(!entries.size().empty);
-        const objT& entry = entries.front().second;
-        aabb_type node_expand(node);
-        aabb_type ptnr_expand(ptnr);
-        expand(node_expand,    entry, this->boundary_);
-        expand(ptnr_expand, entry, this->boundary_);
-        const scalar_type diff_area_node =
-            area(node_expand, boundary_) - area(node, this->boundary_);
-        const scalar_type diff_area_ptnr =
-            area(ptnr_expand, boundary_) - area(ptnr, this->boundary_);
-
-        if(diff_area_node < diff_area_ptnr)
+        std::cerr << "pick_next" << std::endl;
+        assert(!entries.empty());
+        bool is_node;
+        std::size_t idx;
+        scalar_type max_dd = -1;
+        for(std::size_t i=0; i<entries.size(); ++i)
         {
-            return std::make_pair(0, true);
+            aabb_type box1 = node; expand(box1, make_aabb(entries.at(i).second), this->boundary_);
+            aabb_type box2 = ptnr; expand(box2, make_aabb(entries.at(i).second), this->boundary_);
+            const scalar_type d1 = area(box1, this->boundary_) - area(node, this->boundary_);
+            const scalar_type d2 = area(box2, this->boundary_) - area(ptnr, this->boundary_);
+            const scalar_type dd = d1 - d2;
+            if(max_dd < std::abs(dd))
+            {
+                max_dd = std::abs(dd);
+                idx = i;
+                is_node = (dd < 0);
+            }
         }
-        else
-        {
-            return std::make_pair(0, false);
-        }
+        return std::make_pair(idx, is_node);
     }
 
     // split nodes because of new node NN by quadratic algorithm
@@ -444,29 +516,29 @@ class rtree
             partner.box = entries.at(seeds[1]).second;
 
             // remove them from entries pool
-            entries.erase(entries.begin() + seeds[0]);
-            entries.erase(entries.begin() + seeds[1]);
+            entries.erase(entries.begin() + std::min(seeds[0], seeds[1]));
+            entries.erase(entries.begin() + std::max(seeds[0], seeds[1]) - 1);
         }
 
-        std::size_t    node_requires = node_type::min_entry - 1;
-        std::size_t partner_requires = node_type::min_entry - 1;
         while(!entries.empty())
         {
-            if(node_requires >= entries.size())
+            if(min_entry > node.entry.size() &&
+               min_entry - node.entry.size() >= entries.size())
             {
                 for(auto i(entries.begin()), e(entries.end()); i != e; ++i)
                 {
                     node.entry.push_back(i->first);
-                    expand(node.box, i->second);
+                    expand(node.box, i->second, this->boundary_);
                 }
                 return partner;
             }
-            if(partner_requires >= entries.size())
+            if(min_entry > partner.entry.size() &&
+               min_entry - partner.entry.size() >= entries.size())
             {
                 for(auto i(entries.begin()), e(entries.end()); i != e; ++i)
                 {
                     partner.entry.push_back(i->first);
-                    expand(partner.box, i->second);
+                    expand(partner.box, i->second, this->boundary_);
                 }
                 return partner;
             }
@@ -475,18 +547,19 @@ class rtree
                 this->pick_next(entries, node.box, partner.box);
             if(next.second) // next is partner
             {
+                std::cerr << "next entry " << next.first << " is for node." << std::endl;
                 node.entry.push_back(entries.at(next.first).first);
-                expand(node.box,     entries.at(next.first).second);
+                expand(node.box, entries.at(next.first).second, this->boundary_);
             }
             else // next is for partner
             {
+                std::cerr << "next entry " << next.first << " is for partner." << std::endl;
                 partner.entry.push_back(entries.at(next.first).first);
-                expand(partner.box,     entries.at(next.first).second);
+                expand(partner.box, entries.at(next.first).second, this->boundary_);
             }
             entries.erase(entries.begin() + next.first);
         }
         return partner;
-
     }
 
     template<typename Query, typename OutputIterator>
@@ -536,6 +609,7 @@ class rtree
 
     void re_insert(const std::size_t N)
     {
+        std::cerr << "re-insert" << std::endl;
         // insert node to its proper parent. to find the parent of this node N,
         // add 1 to level. root node should NOT come here.
         const std::size_t lvl = level_of(N) + 1;
@@ -574,11 +648,11 @@ class rtree
                     i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
             {
                 aabb_type box = tree_.at(*i).box;
-                const scalar_type area_initial = area(box);
+                const scalar_type area_initial = area(box, this->boundary_);
 
                 expand(box, entry, this->boundary_);
 
-                const scalar_type area_expanded = area(box);
+                const scalar_type area_expanded = area(box, this->boundary_);
                 const scalar_type diff_area     = area_expanded - area_initial;
                 if(diff_area < diff_area_min ||
                    (diff_area == diff_area_min && area_expanded < area_min))
