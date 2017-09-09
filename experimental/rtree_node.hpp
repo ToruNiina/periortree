@@ -32,10 +32,10 @@ struct rtree_node
     ~rtree_node(){}
 
     bool has_enough_storage() const noexcept
-    {return this->children.size() < Max;}
+    {return this->entry.size() != max_entry;}
 
     bool has_enough_entry() const noexcept
-    {return this->children.size() >= Min;}
+    {return this->entry.size() >= min_entry;}
 
     bool           is_leaf;
     std::size_t    parent;
