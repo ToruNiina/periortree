@@ -5,6 +5,7 @@
 #include "boundary_condition.hpp"
 #include "adjust_box.hpp"
 #include "centroid.hpp"
+#include "intersects.hpp"
 #include <algorithm>
 
 namespace perior
