@@ -243,7 +243,7 @@ class rtree
     {
         if(tree_.at(N).parent == nil) // grow tree taller
         {
-            std::cerr << "node " << N << "has no parent. " << std::endl;
+            std::cerr << "node " << N << " has no parent." << std::endl;
             node_type new_root(false, nil);
             new_root.entry.push_back(N);
             new_root.entry.push_back(NN);
@@ -253,7 +253,11 @@ class rtree
 
             this->tree_.at(N).parent = this->root_;
             this->tree_.at(NN).parent = this->root_;
-            std::cerr << "adjust_tree: grow tree taller. new root is " << this->root_ << std::endl;
+            std::cerr << "N (" << N << ") = ";
+            to_svg(std::cerr, tree_.at(N).box, this->boundary_);
+            std::cerr << "\nNN(" << NN << ") = ";
+            to_svg(std::cerr, tree_.at(NN).box, this->boundary_);
+            std::cerr << "\nadjust_tree: grow tree taller. new root is " << this->root_ << std::endl;
             return;
         }
         else
@@ -275,9 +279,15 @@ class rtree
             else
             {
                 std::cerr << "storage is not enough." << std::endl;
-                const node_type parent_partner = this->split_node(node.parent, NN);
-                const std::size_t PP = this->add_node(parent_partner);
+                const std::size_t PP = this->split_node(node.parent, NN);
+
                 std::cerr << "adjust_tree: split node " << node.parent << " and " << PP << std::endl;
+
+                std::cerr << "node (" << node.parent << ") = ";
+                to_svg(std::cerr, tree_.at(node.parent).box, this->boundary_);
+                std::cerr << "\npartner(" << PP << ") = ";
+                to_svg(std::cerr, tree_.at(PP).box, this->boundary_);
+                std::cerr << std::endl;
                 return this->adjust_tree(node.parent, PP);
             }
         }
@@ -489,31 +499,54 @@ class rtree
     }
 
     // split nodes because of new node NN by quadratic algorithm
-    node_type split_node(const std::size_t P, const std::size_t NN)
+    std::size_t split_node(const std::size_t P, const std::size_t NN)
     {
-        node_type const& entry_node = tree_.at(NN);
-        node_type& node = tree_.at(P);          // entries will be copied
-        node_type  partner(false, node.parent); // has no entry
+        node_type& node = tree_.at(P);
+        const std::size_t PP = this->add_node(node_type(false, node.parent));
+        node_type& partner = tree_.at(PP);
+
+        std::cerr << "split_node: node = " << P << ", partner = " << PP << std::endl;
 
         boost::container::static_vector<std::pair<std::size_t, aabb_type>,
             max_entry+1> entries;
-        entries.push_back(std::make_pair(NN, entry_node.box));
+        entries.push_back(std::make_pair(NN, tree_.at(NN).box));
+        std::cerr << "entry node " << NN << " = ";
+        to_svg(std::cerr, tree_.at(NN).box, this->boundary_);
+        std::cerr << std::endl;
 
         for(typename node_type::const_iterator
                 i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
         {
             entries.push_back(std::make_pair(*i, tree_.at(*i).box));
+
+            std::cerr << "entry node " << *i << " = ";
+            to_svg(std::cerr, tree_.at(*i).box, this->boundary_);
+            std::cerr << std::endl;
         }
         node.entry.clear();
         partner.entry.clear(); // for make it sure
 
         /* assign first 2 entries to node and partner */{
             const std::array<std::size_t, 2> seeds = this->pick_seeds(entries);
+            std::cerr << "seeds = " << entries.at(seeds[0]).first << " for node, "
+                      << entries.at(seeds[1]).first << " for partner." << std::endl;
+
                node.entry.push_back(entries.at(seeds[0]).first);
             partner.entry.push_back(entries.at(seeds[1]).first);
 
+            tree_.at(entries.at(seeds[0]).first).parent = P;
+            tree_.at(entries.at(seeds[1]).first).parent = PP;
+
+            std::cerr << "set box of node and partner" << std::endl;
                node.box = entries.at(seeds[0]).second;// these are AABB.
             partner.box = entries.at(seeds[1]).second;
+
+            std::cerr << "node(" << P << ")    = ";
+            to_svg(std::cerr, node.box, this->boundary_);
+            std::cerr << std::endl;
+            std::cerr << "partner(" << PP << ") = ";
+            to_svg(std::cerr, partner.box, this->boundary_);
+            std::cerr << std::endl;
 
             // remove them from entries pool
             entries.erase(entries.begin() + std::min(seeds[0], seeds[1]));
@@ -525,41 +558,76 @@ class rtree
             if(min_entry > node.entry.size() &&
                min_entry - node.entry.size() >= entries.size())
             {
+                std::cerr << "min_entry = " << min_entry
+                          << ", node.entry.size() = " << node.entry.size()
+                          << ", entries.size() = " << entries.size() << std::endl;
                 for(auto i(entries.begin()), e(entries.end()); i != e; ++i)
                 {
                     node.entry.push_back(i->first);
                     expand(node.box, i->second, this->boundary_);
                 }
-                return partner;
+                return PP;
             }
             if(min_entry > partner.entry.size() &&
                min_entry - partner.entry.size() >= entries.size())
             {
+                std::cerr << "min_entry = " << min_entry
+                          << ", partner.entry.size() = " << partner.entry.size()
+                          << ", entries.size() = " << entries.size() << std::endl;
                 for(auto i(entries.begin()), e(entries.end()); i != e; ++i)
                 {
                     partner.entry.push_back(i->first);
                     expand(partner.box, i->second, this->boundary_);
                 }
-                return partner;
+                return PP;
             }
 
             const std::pair<std::size_t, bool> next =
                 this->pick_next(entries, node.box, partner.box);
             if(next.second) // next is partner
             {
-                std::cerr << "next entry " << next.first << " is for node." << std::endl;
+                std::cerr << "next entry " << entries.at(next.first).first
+                          << " is for node." << std::endl;
                 node.entry.push_back(entries.at(next.first).first);
+                tree_.at(entries.at(next.first).first).parent = P;
                 expand(node.box, entries.at(next.first).second, this->boundary_);
+
+                std::cerr << "node expanded;" << std::endl;
+                std::cerr << "node(" << P << ")    = ";
+                to_svg(std::cerr, node.box, this->boundary_);
+                std::cerr << std::endl;
+                std::cerr << "partner(" << PP << ") = ";
+                to_svg(std::cerr, partner.box, this->boundary_);
+                std::cerr << std::endl;
             }
             else // next is for partner
             {
-                std::cerr << "next entry " << next.first << " is for partner." << std::endl;
+                std::cerr << "next entry " << entries.at(next.first).first
+                          << " is for partner." << std::endl;
                 partner.entry.push_back(entries.at(next.first).first);
+                tree_.at(entries.at(next.first).first).parent = PP;
                 expand(partner.box, entries.at(next.first).second, this->boundary_);
+
+                std::cerr << "partner expanded;" << std::endl;
+                std::cerr << "node(" << P << ")    = ";
+                to_svg(std::cerr, node.box, this->boundary_);
+                std::cerr << std::endl;
+                std::cerr << "partner(" << PP << ") = ";
+                to_svg(std::cerr, partner.box, this->boundary_);
+                std::cerr << std::endl;
             }
             entries.erase(entries.begin() + next.first);
         }
-        return partner;
+        tree_.at(P) = node;
+        tree_.at(PP) = partner;
+        std::cerr << "node(" << P << ")    = ";
+        to_svg(std::cerr, tree_.at(P).box, this->boundary_);
+        std::cerr << std::endl;
+        std::cerr << "partner(" << PP << ") = ";
+        to_svg(std::cerr, tree_.at(PP).box, this->boundary_);
+        std::cerr << std::endl;
+        std::cerr << "all entries are inserted." << std::endl;
+        return PP;
     }
 
     template<typename Query, typename OutputIterator>
@@ -624,7 +692,7 @@ class rtree
         }
         else
         {
-            const std::size_t LL = this->add_node(this->split_node(L, N));
+            const std::size_t LL = this->split_node(L, N);
             this->adjust_tree(L, LL);
         }
         return;
