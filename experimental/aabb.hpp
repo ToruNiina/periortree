@@ -33,6 +33,16 @@ struct aabb
     point_type lower_, upper_;
 };
 
+template<typename T, std::size_t N>
+inline bool operator==(aabb<T, N> const& lhs, aabb<T, N> const& rhs) noexcept
+{
+    return lhs.upper() == rhs.upper() && lhs.lower() == rhs.lower();
+}
+template<typename T, std::size_t N>
+inline bool operator!=(aabb<T, N> const& lhs, aabb<T, N> const& rhs) noexcept
+{
+    return lhs.upper() != rhs.upper() || lhs.lower() != rhs.lower();
+}
 
 } // perior
 #endif//PR_TREE_AABB_HPP

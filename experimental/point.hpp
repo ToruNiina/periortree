@@ -85,6 +85,28 @@ struct point
 };
 
 template<typename T, std::size_t N>
+inline bool
+operator==(const point<T, N>& lhs, const point<T, N>& rhs) noexcept
+{
+    for(std::size_t i=0; i<N; ++i)
+    {
+        if(lhs[i] != rhs[i]){return false;}
+    }
+    return true;
+}
+
+template<typename T, std::size_t N>
+inline bool
+operator!=(const point<T, N>& lhs, const point<T, N>& rhs) noexcept
+{
+    for(std::size_t i=0; i<N; ++i)
+    {
+        if(lhs[i] != rhs[i]){return true;}
+    }
+    return false;
+}
+
+template<typename T, std::size_t N>
 inline point<T, N>
 operator+(const point<T, N>& lhs, const point<T, N>& rhs) noexcept
 {
