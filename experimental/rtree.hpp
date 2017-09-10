@@ -272,6 +272,7 @@ class rtree
             if(parent_.has_enough_storage())
             {
                 std::cerr << "storage is enough." << std::endl;
+                //XXX condense?
                 expand(parent_.box, partner.box, this->boundary_);
                 parent_.entry.push_back(NN);
                 return this->adjust_tree(node.parent);
