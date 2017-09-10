@@ -151,7 +151,7 @@ class rtree
         {
             const std::size_t node_idx  = found->first;
             const std::size_t value_idx = *(found->second);
-            this->tree_.at(node_idx).entries.erase(found->second);
+            this->tree_.at(node_idx).entry.erase(found->second);
             this->erase_value(value_idx);
             this->condense_tree(node_idx);
             return true;
@@ -295,7 +295,7 @@ class rtree
     }
 
     boost::optional<std::pair<std::size_t, typename node_type::const_iterator>>
-    find_leaf(std::size_t node_idx, const indexable_type& entry) const
+    find_leaf(std::size_t node_idx, const value_type& entry) const
     {
         const node_type& node = tree_.at(node_idx);
         if(node.is_leaf)
