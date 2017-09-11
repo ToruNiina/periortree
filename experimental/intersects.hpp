@@ -92,13 +92,13 @@ intersects(const aabb<T, N>& lhs, const aabb<T, N>& rhs,
         {
             // :   |---|   : lhs [l1, u1]
             // :-----|   |-: rhs [l2, u2]
-            if(u2 < l1 && u1 < l2){return false}
+            if(u2 < l1 && u1 < l2){return false;}
         }
         else if(l1 > u1 && l2 <= u2)
         {
             // :--|      |-: lhs
             // : |------|  : rhs
-            if(u1 < l2 && u2 < l1){return false}
+            if(u1 < l2 && u2 < l1){return false;}
         }
         else
         {
