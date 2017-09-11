@@ -53,6 +53,7 @@ within(const point<T, N>& p, const aabb<T, N>& box,
 }
 
 //! returns whether 1st-arg is within 2nd-arg.
+//  if the edges are in contact, return true.
 template<typename T, std::size_t N>
 inline bool
 within(const aabb<T, N>& inside, const aabb<T, N>& covers,
@@ -62,8 +63,8 @@ within(const aabb<T, N>& inside, const aabb<T, N>& covers,
     {
         // :   |---|   : inside
         // : |------|  : covers
-        if(inside.lower()[i] <= covers.lower()[i] ||
-           covers.upper()[i] <= inside.upper()[i])
+        if(inside.lower()[i] < covers.lower()[i] ||
+           covers.upper()[i] < inside.upper()[i])
         {
             return false;
         }
@@ -87,9 +88,9 @@ within(const aabb<T, N>& inside, const aabb<T, N>& covers,
         {
             // :   |---|   : inside
             // : |------|  : covers
-            if(l1 <= l2 || u2 <= u1){return false;}
+            if(l1 < l2 || u2 < u1){return false;}
         }
-        else if(l1 <= u1 && l2 >= u2)
+        else if(l1 <= u1 && l2 > u2)
         {
             // :|---|      : inside
             // :-----|   |-: covers
@@ -103,9 +104,9 @@ within(const aabb<T, N>& inside, const aabb<T, N>& covers,
         }
         else
         {
-            // :-|      |--: inside
-            // :--|   |----: covers
-            if(l1 >= l2 || u2 <= u1){return false;}
+            // :-|      |--: inside [l1, u1]
+            // :--|   |----: covers [l2, u2]
+            if(l1 < l2 || u2 < u1){return false;}
         }
     }
     return true;
