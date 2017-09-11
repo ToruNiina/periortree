@@ -2,6 +2,7 @@
 #define PERIOR_TREE_RTREE_HPP
 #include "rtree_node.hpp"
 #include "expand.hpp"
+#include "within.hpp"
 #include "area.hpp"
 #include "dump.hpp"
 #include <boost/container/vector.hpp>
@@ -320,6 +321,11 @@ class rtree
     boost::optional<std::pair<std::size_t, typename node_type::const_iterator>>
     find_leaf(std::size_t node_idx, const value_type& entry) const
     {
+        if(!within(indexable::invoke(entry), tree_.at(node_idx).box, this->boundary_))
+        {
+            return boost::none;
+        }
+
         const node_type& node = tree_.at(node_idx);
         if(node.is_leaf)
         {
@@ -338,9 +344,13 @@ class rtree
             for(typename node_type::const_iterator
                     i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
             {
-                boost::optional<std::pair<std::size_t, typename node_type::const_iterator>
-                    > found = this->find_leaf(*i, entry);
-                if(found)
+                if(!within(indexable::invoke(entry), tree_.at(*i).box, this->boundary_))
+                {
+                    continue;
+                }
+
+                if(boost::optional<std::pair<std::size_t, typename node_type::const_iterator>
+                    > found = this->find_leaf(*i, entry))
                 {
                     return found;
                 }
