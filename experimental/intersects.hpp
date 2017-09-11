@@ -7,7 +7,7 @@
 namespace perior
 {
 
-//! returns whether 1st-arg intersects(<=) 2nd-arg.
+//! returns whether point intersects box.
 template<typename T, std::size_t N>
 inline bool
 intersects(const point<T, N>& p, const aabb<T, N>& box,
@@ -15,33 +15,7 @@ intersects(const point<T, N>& p, const aabb<T, N>& box,
 {
     for(std::size_t i=0; i<N; ++i)
     {
-        if(p[i] < box.lower()[i] || box.upper()[i] < p[i]){return false;}
-    }
-    return true;
-}
-
-template<typename T, std::size_t N>
-inline bool
-intersects(const point<T, N>& p, const aabb<T, N>& box,
-           const cubic_periodic_boundary<T, N>& b) noexcept
-{
-    for(std::size_t i=0; i<N; ++i)
-    {
-        if(p[i] < box.lower()[i] || box.upper()[i] < p[i]){return false;}
-    }
-    return true;
-}
-
-//! returns whether 1st-arg is within 2nd-arg.
-template<typename T, std::size_t N>
-inline bool
-intersects(const aabb<T, N>& inside, const aabb<T, N>& covers,
-           const unlimited_boundary<T, N>& b) noexcept
-{
-    for(std::size_t i=0; i<N; ++i)
-    {
-        if(inside.lower()[i] < covers.lower()[i] ||
-           covers.upper()[i] < inside.upper()[i])
+        if(p[i] < box.lower()[i] || box.upper()[i] < p[i])
         {
             return false;
         }
@@ -51,44 +25,90 @@ intersects(const aabb<T, N>& inside, const aabb<T, N>& covers,
 
 template<typename T, std::size_t N>
 inline bool
-intersects(const aabb<T, N>& inside, const aabb<T, N>& covers,
+intersects(const point<T, N>& p, const aabb<T, N>& box,
            const cubic_periodic_boundary<T, N>& b) noexcept
 {
     for(std::size_t i=0; i<N; ++i)
     {
-        const T l1 = inside.lower()[i];
-        const T u1 = inside.upper()[i];
-        const T l2 = covers.lower()[i];
-        const T u2 = covers.upper()[i];
-
-        if(l1 < u1 && l2 < u2)
+        if(box.lower()[i] <= box.upper()[i])
         {
-            // :   |---|   : inside
-            // : |------|  : covers
-            if(l1 < l2 || u2 < u1){return false;}
-        }
-        else if(l1 < u1 && l2 > u2)
-        {
-            // :|---|      : inside
-            // :-----|   |-: covers
-            if(!(u1 <= u2 || l2 <= l1)){return false;}
-        }
-        else if(l1 > u1 && l2 <= u2)
-        {
-            // :--|      |-: inside
-            // : |------|  : covers
-            if(b.lower()[i] != l2 || b.upper()[i] != u2){return false;}
+            //: |-----|  : box
+            //:        x : point
+            if(p[i] < box.lower()[i] || box.upper()[i] < p[i])
+            {
+                return false;
+            }
         }
         else
         {
-            // :-|      |--: inside
-            // :--|   |----: covers
-            if(l1 > l2 || u2 < u1){return false;}
+            //:--|  |----: box
+            //:    x     : point
+            if(box.upper()[i] < p[i] && p[i] < box.lower()[i])
+            {
+                return false;
+            }
         }
     }
     return true;
 }
 
+//! returns whether 1st-arg intersects 2nd-arg.
+template<typename T, std::size_t N>
+inline bool
+intersects(const aabb<T, N>& lhs, const aabb<T, N>& rhs,
+           const unlimited_boundary<T, N>& b) noexcept
+{
+    for(std::size_t i=0; i<N; ++i)
+    {
+        // :  |------| : lhs
+        // : |---|     : rhs
+        if(lhs.upper()[i] < rhs.lower()[i] || rhs.upper()[i] < lhs.lower()[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+template<typename T, std::size_t N>
+inline bool
+intersects(const aabb<T, N>& lhs, const aabb<T, N>& rhs,
+           const cubic_periodic_boundary<T, N>& b) noexcept
+{
+    for(std::size_t i=0; i<N; ++i)
+    {
+        const T l1 = lhs.lower()[i];
+        const T u1 = lhs.upper()[i];
+        const T l2 = rhs.lower()[i];
+        const T u2 = rhs.upper()[i];
+
+        if(l1 < u1 && l2 < u2)
+        {
+            // :   |-----| : lhs [l1, u1]
+            // : |----|    : rhs [l2, u2]
+            if(u1 < l2 || u2 < l1){return false;}
+        }
+        else if(l1 < u1 && l2 > u2)
+        {
+            // :   |---|   : lhs [l1, u1]
+            // :-----|   |-: rhs [l2, u2]
+            if(u2 < l1 && u1 < l2){return false}
+        }
+        else if(l1 > u1 && l2 <= u2)
+        {
+            // :--|      |-: lhs
+            // : |------|  : rhs
+            if(u1 < l2 && u2 < l1){return false}
+        }
+        else
+        {
+            // :-|      |--: lhs
+            // :--|   |----: rhs
+            // always intersects at the boundary!
+        }
+    }
+    return true;
+}
 
 } // perior
 #endif//PERIOR_TREE_CENTROID_HPP
