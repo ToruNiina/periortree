@@ -414,7 +414,8 @@ class rtree
         /* assign first 2 entries to node and partner */
         {
             const std::array<std::size_t, 2> seeds = this->pick_seeds(entries);
-            std::cerr << "seeds = {" << seeds[0] << ", " << seeds[1] << "}" << std::endl;
+            std::cerr << "seeds = {" << entries.at(seeds[0]).first
+                      << ", " << entries.at(seeds[1]).first << "}" << std::endl;
             std::cerr << "entries.size() = " << entries.size() << std::endl;
                node.entry.push_back(entries.at(seeds[0]).first);
             partner.entry.push_back(entries.at(seeds[1]).first);
@@ -456,13 +457,15 @@ class rtree
                 this->pick_next(entries, node.box, partner.box);
             if(next.second) // next is for node
             {
-                std::cerr << "next entry " << next.first << " is for node." << std::endl;
+                std::cerr << "next entry " << entries.at(next.first).first
+                          << " is for node." << std::endl;
                 node.entry.push_back(entries.at(next.first).first);
                 expand(node.box, entries.at(next.first).second, this->boundary_);
             }
             else // next is for partner
             {
-                std::cerr << "next entry " << next.first << " is for partner." << std::endl;
+                std::cerr << "next entry " << entries.at(next.first).first
+                          << " is for partner." << std::endl;
                 partner.entry.push_back(entries.at(next.first).first);
                 expand(partner.box, entries.at(next.first).second, this->boundary_);
             }
