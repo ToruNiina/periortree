@@ -5,7 +5,7 @@
 #include "boundary_condition.hpp"
 #include "adjust_box.hpp"
 #include "centroid.hpp"
-#include "intersects.hpp"
+#include "within.hpp"
 #include <algorithm>
 
 namespace perior
@@ -17,7 +17,7 @@ inline bool
 expand(aabb<T, N>& box, const point<T, N>& entry,
        const unlimited_boundary<T, N>& b) noexcept
 {
-    if(intersects(entry, box, b)) {return false;}
+    if(within(entry, box, b)) {return false;}
     for(std::size_t i=0; i<N; ++i)
     {
         box.upper()[i] = std::max(box.upper()[i], entry[i]);
@@ -31,7 +31,7 @@ inline bool
 expand(aabb<T, N>& box, const aabb<T, N>& entry,
        const unlimited_boundary<T, N>& b) noexcept
 {
-    if(intersects(entry, box, b)) {return false;}
+    if(within(entry, box, b)) {return false;}
     for(std::size_t i=0; i<N; ++i)
     {
         box.upper()[i] = std::max(box.upper()[i], entry.upper()[i]);
@@ -46,7 +46,7 @@ inline bool
 expand(aabb<T, N>& box, const point<T, N>& entry,
        const cubic_periodic_boundary<T, N>& b) noexcept
 {
-    if(intersects(entry, box, b)) {return false;}
+    if(within(entry, box, b)) {return false;}
     const point<T, N> c = centroid(box, b);
     const point<T, N> d = adjust_direction(entry - c, b);
     const point<T, N> e = c + d;
