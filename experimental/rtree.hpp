@@ -154,6 +154,7 @@ class rtree
             const std::size_t value_idx = *(found->second);
             this->tree_.at(node_idx).entry.erase(found->second);
             this->erase_value(value_idx);
+            this->condense_box(this->tree_.at(node_idx));
             this->condense_tree(node_idx);
             return true;
         }
@@ -363,13 +364,17 @@ class rtree
 
     void condense_tree(const std::size_t N)
     {
+        std::cerr << "condense_tree" << std::endl;
         std::size_t node_idx = N;
         boost::container::small_vector<std::size_t, 8> eliminated;
+        std::cerr << "node " << node_idx << " has "
+                  << tree_.at(node_idx).entry.size() << "entries" << std::endl;
 
         // check whether the node should be eliminated
         while(!(tree_.at(node_idx).has_enough_entry()) &&
                 tree_.at(node_idx).parent != nil)
         {
+            std::cerr << "node " << node_idx << " should be eliminated" << std::endl;
             const std::size_t parent_idx = tree_.at(node_idx).parent;
 
             node_type& parent = tree_.at(parent_idx);
@@ -717,16 +722,22 @@ class rtree
 
     void re_insert(const std::size_t N)
     {
-        std::cerr << "re-insert" << std::endl;
+        // reset connection to the parent!
+        std::cerr << "re-insert node " << N << std::endl;
+
         // insert node to its proper parent. to find the parent of this node N,
         // add 1 to level. root node should NOT come here.
         const std::size_t lvl = level_of(N) + 1;
         const aabb_type&  entry = tree_.at(N).box;
         const std::size_t L = choose_node_with_level(entry, lvl);
 
+        std::cerr << "its level is " << lvl << std::endl;
+        std::cerr << "its parents node is " << lvl << std::endl;
+
         if(tree_.at(L).has_enough_storage())
         {
             tree_.at(L).entry.push_back(N);
+            tree_.at(N).parent = L;
             expand(tree_.at(L).box, entry, this->boundary_);
             this->adjust_tree(L);
         }
@@ -776,8 +787,16 @@ class rtree
 
     void condense_box(node_type& node)
     {
+        assert(!node.entry.empty());
         if(node.is_leaf)
         {
+            std::cerr << "leaf node has values {";
+            for(auto i: node.entry)
+            {
+                std::cerr << i << ", ";
+            }
+            std::cerr << '}' << std::endl;
+
             auto i = node.entry.cbegin();
             node.box = indexable::invoke(this->container_.at(*i));
             ++i;
@@ -789,6 +808,13 @@ class rtree
         }
         else
         {
+            std::cerr << "internal node has values {";
+            for(auto i: node.entry)
+            {
+                std::cerr << i << ", ";
+            }
+            std::cerr << '}' << std::endl;
+
             auto i = node.entry.cbegin();
             node.box = this->tree_.at(*i).box;
             ++i;
