@@ -170,23 +170,45 @@ class rtree
     std::basic_ostream<charT, traits>&
     dump(std::basic_ostream<charT, traits>& os) const
     {
+        if(this->root_ == nil){return os;}
         std::vector<std::string> colors;
         colors.push_back("red");
         colors.push_back("green");
         colors.push_back("blue");
-        std::size_t idx = 0;
-        for(typename tree_type::const_iterator i(tree_.begin()), e(tree_.end());
-                i != e; ++i)
-        {
-            to_svg(os, i->box, this->boundary_, colors.at(this->level_of(idx) % 3), 5, "none");
-            os << '\n';
-            ++idx;
-        }
-        os << std::flush;
-        return os;
+        return dump_node(os, this->root_, 0, colors);
     }
 
   private:
+
+    template<typename charT, typename traits>
+    std::basic_ostream<charT, traits>&
+    dump_node(std::basic_ostream<charT, traits>& os,
+              const std::size_t N, const std::size_t depth,
+              const std::vector<std::string>& clrs) const
+    {
+        const std::string& clr = clrs.at(depth%3);
+        to_svg(os, tree_.at(N).box, this->boundary_, clr, 5, "none");
+        os << '\n';
+        if(tree_.at(N).is_leaf)
+        {
+            for(auto i=tree_.at(N).entry.cbegin(), e=tree_.at(N).entry.cend();
+                    i!=e; ++i)
+            {
+                to_svg(os, indexable::invoke(container_.at(*i)), this->boundary_, "black", 1, "black");
+                os << '\n';
+            }
+            return os;
+        }
+        else
+        {
+            for(auto i=tree_.at(N).entry.cbegin(), e=tree_.at(N).entry.cend();
+                    i!=e; ++i)
+            {
+                dump_node(os, *i, depth+1, clrs);
+            }
+            return os;
+        }
+    }
 
     std::size_t choose_leaf(const indexable_type& entry)
     {
@@ -272,7 +294,6 @@ class rtree
             if(parent_.has_enough_storage())
             {
                 std::cerr << "storage is enough." << std::endl;
-                //XXX condense?
                 expand(parent_.box, partner.box, this->boundary_);
                 parent_.entry.push_back(NN);
                 return this->adjust_tree(node.parent);
@@ -280,15 +301,17 @@ class rtree
             else
             {
                 std::cerr << "storage is not enough." << std::endl;
+
                 const std::size_t PP = this->split_node(node.parent, NN);
 
-                std::cerr << "adjust_tree: split node " << node.parent << " and " << PP << std::endl;
-
+                std::cerr << "adjust_tree: split node " << node.parent
+                          << " and " << PP << std::endl;
                 std::cerr << "node (" << node.parent << ") = ";
                 to_svg(std::cerr, tree_.at(node.parent).box, this->boundary_);
                 std::cerr << "\npartner(" << PP << ") = ";
                 to_svg(std::cerr, tree_.at(PP).box, this->boundary_);
                 std::cerr << std::endl;
+
                 return this->adjust_tree(node.parent, PP);
             }
         }
