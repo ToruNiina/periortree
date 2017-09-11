@@ -7,7 +7,7 @@
 namespace perior
 {
 
-//! returns whether 1st-arg is within(<) 2nd-arg.
+//! returns whether point is within box.
 template<typename T, std::size_t N>
 inline bool
 within(const point<T, N>& p, const aabb<T, N>& box,
@@ -15,7 +15,10 @@ within(const point<T, N>& p, const aabb<T, N>& box,
 {
     for(std::size_t i=0; i<N; ++i)
     {
-        if(p[i] <= box.lower()[i] || box.upper()[i] <= p[i]){return false;}
+        if(p[i] < box.lower()[i] || box.upper()[i] < p[i])
+        {
+            return false;
+        }
     }
     return true;
 }
@@ -27,7 +30,24 @@ within(const point<T, N>& p, const aabb<T, N>& box,
 {
     for(std::size_t i=0; i<N; ++i)
     {
-        if(p[i] <= box.lower()[i] || box.upper()[i] <= p[i]){return false;}
+        if(box.lower()[i] <= box.upper()[i])
+        {
+            //: |-----|  : box
+            //:        x : point
+            if(p[i] < box.lower()[i] || box.upper()[i] < p[i])
+            {
+                return false;
+            }
+        }
+        else
+        {
+            //:--|  |----: box
+            //:    x     : point
+            if(box.upper()[i] < p[i] && p[i] < box.lower()[i])
+            {
+                return false;
+            }
+        }
     }
     return true;
 }
@@ -40,6 +60,8 @@ within(const aabb<T, N>& inside, const aabb<T, N>& covers,
 {
     for(std::size_t i=0; i<N; ++i)
     {
+        // :   |---|   : inside
+        // : |------|  : covers
         if(inside.lower()[i] <= covers.lower()[i] ||
            covers.upper()[i] <= inside.upper()[i])
         {
