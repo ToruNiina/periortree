@@ -273,10 +273,12 @@ class rtree
             new_root.box = tree_.at(N).box;
             expand(new_root.box, tree_.at(NN).box, this->boundary_);
             this->root_ = this->add_node(new_root);
+            std::cerr << "NR(" << this->root_ << ") = ";
+            to_svg(std::cerr, tree_.at(this->root_).box, this->boundary_);
 
             this->tree_.at(N).parent = this->root_;
             this->tree_.at(NN).parent = this->root_;
-            std::cerr << "N (" << N << ") = ";
+            std::cerr << "\nN (" << N << ") = ";
             to_svg(std::cerr, tree_.at(N).box, this->boundary_);
             std::cerr << "\nNN(" << NN << ") = ";
             to_svg(std::cerr, tree_.at(NN).box, this->boundary_);
@@ -375,6 +377,7 @@ class rtree
                     parent.entry.begin(), parent.entry.end(), node_idx);
             assert(found != parent.entry.end());
             parent.entry.erase(found);
+            this->condense_box(parent);
 
             eliminated.push_back(node_idx);
             node_idx = parent_idx;
@@ -769,6 +772,32 @@ class rtree
             }
         }
         return node_idx;
+    }
+
+    void condense_box(node_type& node)
+    {
+        if(node.is_leaf)
+        {
+            auto i = node.entry.cbegin();
+            node.box = indexable::invoke(this->container_.at(*i));
+            ++i;
+            for(auto e(node.entry.cend()); i != e; ++i)
+            {
+                expand(node.box, indexable::invoke(this->container_.at(*i)),
+                       this->boundary_);
+            }
+        }
+        else
+        {
+            auto i = node.entry.cbegin();
+            node.box = this->tree_.at(*i).box;
+            ++i;
+            for(auto e(node.entry.cend()); i != e; ++i)
+            {
+                expand(node.box, this->tree_.at(*i).box, this->boundary_);
+            }
+        }
+        return;
     }
 
   private:
