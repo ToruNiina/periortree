@@ -86,20 +86,20 @@ within(const aabb<T, N>& inside, const aabb<T, N>& covers,
 
         if(l1 <= u1 && l2 <= u2)
         {
-            // :   |---|   : inside
-            // : |------|  : covers
+            // :   |---|   : inside [l1, u1]
+            // : |------|  : covers [l2, u2]
             if(l1 < l2 || u2 < u1){return false;}
         }
         else if(l1 <= u1 && l2 > u2)
         {
-            // :|---|      : inside
-            // :-----|   |-: covers
-            if(!(u1 < u2 || l2 < l1)){return false;}
+            // :|---|      : inside [l1, u1]
+            // :-----|   |-: covers [l2, u2]
+            if(!(u1 <= u2 || l2 <= l1)){return false;}
         }
         else if(l1 > u1 && l2 <= u2)
         {
-            // :--|      |-: inside
-            // : |------|  : covers
+            // :--|      |-: inside [l1, u1]
+            // : |------|  : covers [l2, u2]
             if(b.lower()[i] != l2 || b.upper()[i] != u2){return false;}
         }
         else
