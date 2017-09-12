@@ -1,7 +1,6 @@
 #ifndef PERIOR_TREE_BOUNDARY_CONDITION_HPP
 #define PERIOR_TREE_BOUNDARY_CONDITION_HPP
 #include "point.hpp"
-#include "aabb.hpp"
 
 namespace perior
 {
