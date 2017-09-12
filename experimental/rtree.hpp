@@ -101,10 +101,10 @@ class rtree
     rtree& operator=(const rtree&) = default;
     rtree& operator=(rtree&&)      = default;
 
-    explicit rtree(const boundary_type& b): boundary_(b){}
-    explicit rtree(const equal_to_type& e): equal_to_(e){}
+    explicit rtree(const boundary_type& b): root_(nil), boundary_(b){}
+    explicit rtree(const equal_to_type& e): root_(nil),  equal_to_(e){}
     rtree(const boundary_type& b, const equal_to_type& e)
-        : equal_to_(e), boundary_(b)
+        : root_(nil), equal_to_(e), boundary_(b)
     {}
 
     std::size_t size() const noexcept {return container_.size();}
@@ -122,8 +122,13 @@ class rtree
     void insert(const value_type& v)
     {
         const std::size_t     idx   = this->add_value(v);
+        std::cerr << "new value index = " << idx << std::endl;
+
         const indexable_type& entry = indexable::invoke(v);
+
+        std::cerr << "seaching leaf to insert..." << std::endl;
         const std::size_t L = this->choose_leaf(entry);
+        std::cerr << "leaf to insert = " << L << std::endl;
 
         if(tree_.at(L).has_enough_storage())
         {
@@ -214,13 +219,19 @@ class rtree
 
     std::size_t choose_leaf(const indexable_type& entry)
     {
+        std::cerr << "root = " << this->root_ << std::endl;
         if(this->root_ == nil)
         {
+            std::cerr << "this tree has no node. add new root" << std::endl;
+
             node_type n(true, nil);
             n.box = make_aabb(entry);
             this->root_ = this->add_node(n);
+
+            std::cerr << "new root = " << this->root_ << std::endl;
             return this->root_;
         }
+        std::cerr << "now tree has root " << this->root_ << std::endl;
 
         std::size_t node_idx = this->root_;
         while(!(this->tree_.at(node_idx).is_leaf))
