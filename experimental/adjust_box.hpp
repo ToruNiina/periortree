@@ -20,7 +20,7 @@ adjust_box(aabb<T, N> x, const cubic_periodic_boundary<T, N>& b) noexcept
 {
     for(std::size_t i=0; i<N; ++i)
     {
-        if(x.lower()[i] <= b.lower()[i] && b.upper()[i] <= x.upper()[i])
+        if(x.upper()[i] - x.lower()[i] >= b.upper()[i] - b.lower()[i])
         {
             // both lower and upper exceeds boundary.
             // in this dimension, box size is equal to that of boundary.
