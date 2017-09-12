@@ -335,12 +335,12 @@ class rtree
     boost::optional<std::pair<std::size_t, typename node_type::const_iterator>>
     find_leaf(std::size_t node_idx, const value_type& entry) const
     {
-        if(!within(indexable::invoke(entry), tree_.at(node_idx).box, this->boundary_))
+        const node_type& node = tree_.at(node_idx);
+        if(within(indexable::invoke(entry), node.box, this->boundary_) == false)
         {
             return boost::none;
         }
 
-        const node_type& node = tree_.at(node_idx);
         if(node.is_leaf)
         {
             for(typename node_type::const_iterator
