@@ -69,7 +69,7 @@ expand(aabb<T, N>& box, const aabb<T, N>& entry,
     const point<T, N> sb = span(box.lower(),   box.upper(),   b);
     const point<T, N> se = span(entry.lower(), entry.upper(), b);
     const point<T, N> cb = centroid(box, b);
-    const point<T, N> ce = cb + adjust_direction(centroid(entry) - cb, b);
+    const point<T, N> ce = cb + adjust_direction(centroid(entry, b) - cb, b);
 
     // reconstruct aabbs at their nearest relative position without boundary
     const point<T, N> ub = cb + sb * 0.5;
