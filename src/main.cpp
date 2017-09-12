@@ -4,7 +4,7 @@
 
 typedef perior::point<double,2> point_t;
 typedef perior::aabb<double,2>  aabb_t;
-typedef perior::unlimited_boundary<double,2> boundary_t;
+typedef perior::cubic_periodic_boundary<double, 2> boundary_t;
 typedef std::pair<aabb_t, std::size_t> value_t;
 typedef perior::rtree<value_t, perior::quadratic<2, 6>, boundary_t> rtree_t;
 
@@ -26,8 +26,8 @@ void dump(const std::string& fname, const rtree_t& rtr, const boundary_t& bdry)
 
 int main()
 {
-    rtree_t tree;
-    boundary_t bdry;
+    boundary_t bdry(point_t(0,0), point_t(1000, 1000));
+    rtree_t tree(bdry);
 
     std::mt19937 mt_(123456789);
     std::uniform_int_distribution<std::size_t> uni(0, 10000);
@@ -47,8 +47,10 @@ int main()
         boxes.push_back(box);
 
         tree.insert(value_t(box, i));
+
         std::string fname = std::string("rtree_") + std::to_string(i) + std::string(".svg");
         dump(fname, tree, bdry);
+
     }
 
     for(std::size_t i=50; i<70; ++i)
