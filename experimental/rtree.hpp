@@ -155,7 +155,7 @@ class rtree
             this->tree_.at(node_idx).entry.erase(found->second);
             this->erase_value(value_idx);
             this->condense_box(this->tree_.at(node_idx));
-            this->condense_tree(node_idx);
+            this->condense_leaf(node_idx);
             return true;
         }
         return false;
@@ -362,40 +362,96 @@ class rtree
         }
     }
 
-    void condense_tree(const std::size_t N)
+    void condense_leaf(const std::size_t N)
     {
-        std::cerr << "condense_tree" << std::endl;
-        std::size_t node_idx = N;
-        boost::container::small_vector<std::size_t, 8> eliminated;
-        std::cerr << "node " << node_idx << " has "
-                  << tree_.at(node_idx).entry.size() << "entries" << std::endl;
+        const node_type& node = this->tree_.at(N);
+        assert(node.is_leaf);
 
-        // check whether the node should be eliminated
-        while(!(tree_.at(node_idx).has_enough_entry()) &&
-                tree_.at(node_idx).parent != nil)
+        std::cerr << "condense_leaf for " << N << std::endl;
+        std::cerr << "leaf-node " << N << " has " << node.entry.size()
+                  << " entries." << std::endl;
+
+        if(node.has_enough_entry() || node.parent == nil)
         {
-            std::cerr << "node " << node_idx << " should be eliminated" << std::endl;
-            const std::size_t parent_idx = tree_.at(node_idx).parent;
-
-            node_type& parent = tree_.at(parent_idx);
-            typename node_type::const_iterator found = std::find(
-                    parent.entry.begin(), parent.entry.end(), node_idx);
-            assert(found != parent.entry.end());
-            parent.entry.erase(found);
-            this->condense_box(parent);
-
-            eliminated.push_back(node_idx);
-            node_idx = parent_idx;
+            std::cerr << "leaf-node " << N << " is root or has enough entry"
+                      << std::endl;
+            return;
         }
 
-        // re-insert eliminated nodes
-        for(boost::container::small_vector<std::size_t, 8>::const_iterator
-                i(eliminated.begin()), e(eliminated.end()); i != e; ++i)
+        std::cerr << "node " << N << " should be eliminated." << std::endl;
+        std::cerr << "parent of node " << N << " is " << node.parent << std::endl;
+
+        // copy index of objects
+        boost::container::small_vector<std::size_t, min_entry> eliminated_objs;
+        std::copy(node.entry.begin(), node.entry.end(),
+                  std::back_inserter(eliminated_objs));
+
+        // erase the node N from its parent and condense aabb
+        typename node_type::iterator found = std::find(
+                this->tree_.at(node.parent).entry.begin(),
+                this->tree_.at(node.parent).entry.end(), N);
+        assert(found != this->tree_.at(node.parent).entry.end());
+        this->tree_.at(node.parent).entry.erase(found);
+        this->condense_box(this->tree_.at(node.parent));
+
+        // re-insert entries eliminated from node N
+        for(auto i(eliminated_objs.begin()), e(eliminated_objs.end()); i!=e; ++i)
+        {
+            this->insert(this->container_.at(*i));
+        }
+
+        // condense ancester nodes...
+        condense_node(node.parent);
+        return;
+    }
+
+    void condense_node(const std::size_t N)
+    {
+        const node_type& node = this->tree_.at(N);
+        assert(node.is_leaf == false);
+
+        std::cerr << "condense_node for " << N << std::endl;
+        std::cerr << "internal-node " << N << " has " << node.entry.size()
+                  << " entries." << std::endl;
+
+        if(node.has_enough_entry())
+        {
+            std::cerr << "internal-node " << N << " has enough entry"
+                      << std::endl;
+            return;
+        }
+        if(node.parent == nil && node.entry.size() == 1)
+        {
+            std::cerr << "root-node has only 1 entry. remove." << std::endl;
+            this->root_ = node.entry.front();
+            this->erase_node(N);
+            std::cerr << "new root is " << this->root_ << std::endl;
+            return;
+        }
+        std::cerr << "internal node has parent " << node.parent << std::endl;
+
+        // collect index of nodes that are children of the node to be removed
+        boost::container::small_vector<std::size_t, min_entry> eliminated_nodes;
+        std::copy(node.entry.begin(), node.entry.end(),
+                  std::back_inserter(eliminated_nodes));
+
+        // erase the node N from its parent and condense its aabb
+        typename node_type::iterator found = std::find(
+                this->tree_.at(node.parent).entry.begin(),
+                this->tree_.at(node.parent).entry.end(), N);
+        assert(found != this->tree_.at(node.parent).entry.end());
+        this->tree_.at(node.parent).entry.erase(found);
+        this->condense_box(this->tree_.at(node.parent));
+
+        // re-insert nodes eliminated from node N
+        for(auto i(eliminated_nodes.begin()), e(eliminated_nodes.end()); i!=e; ++i)
         {
             this->re_insert(*i);
         }
+        this->condense_node(node.parent);
         return;
     }
+
 
     // split nodes because of one entry
     node_type split_leaf(const std::size_t N,
