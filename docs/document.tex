@@ -6,8 +6,13 @@
 \usepackage[dvipdfmx]{hyperref} % links
 \usepackage{caption}            % caption
 \usepackage{microtype}          % improves typesetting in LaTeX
+\usepackage{algpseudocode}
+\usepackage{algorithm}
 \usepackage{graphicx}
 \usepackage{color} % ex.) \textcolor{color}{text}
+
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
 
 \begin{document}
 
@@ -51,8 +56,8 @@
 
 \section*{Introduction}
 
-Computational simulations are the essential tools for scientific study, such as
-investigating behaviors of complex biochemical models. To perform such a large
+Computational simulations are the essential tools for scientific research, such
+as investigating behaviors of complex biochemical models. To perform such a large
 scale simulation, both huge amount of computational resources and efficient
 simulation softwares are required.
 
@@ -63,62 +68,87 @@ simulation processes, but also the data analysis of simulation results.
 
 An R-Tree is a widely used data structure representing bounding volume
 hierarchies (BVH) by using axis-aligned bounding box (AABB) for all its entries
-\cite{Guttman1984}. As its efficiency, many of its variants have been proposed
-\textcolor{red}{TODO: cite}.
+\cite{Guttman1984}. As its efficiency, many variants have been proposed and is
+applied for many problems in broad range of fields.
+\textcolor{red}{citation needed}.
 
-In order to use it with periodic boundary conditions (PBC), currently,
+In order to use it with periodic boundary conditions (PBCs), currently,
 two methods are proposed\cite{CoSTR-R-tree2016}. The method visually described in
-figure \ref{fig1} A copies all the objects in the simulation system
+figure \ref{fig1}A copies all the objects in the simulation system
 along each periodic boundaries. Although it can search objects associated with
 the adjacent periodic images in the same way as normal R-Tree, it consumes
 memory $3^D$ fold a lot (here $D$ reprecents a number of dimension). Figure
-\ref{fig1} B showes another method that contains only one image,
+\ref{fig1}B showes another method that contains only one image,
 copying query AABB in the same manner as copying whole system.
-
-Here I propose the novel method to apply PBC to R-Tree. The main idea is
-applying the PBC to each operations of AABBs that are performed in each steps to
-maintain an R-Tree. With this method, it is not needed to copy objects or query
-AABBs at all. Moreover, using the information about the boundary condition,
-it is expected that the size of each AABBs associated with each nodes decreases
-relative to the other methods in some cases, suggesting that the spatial search
-become more efficient.
-
-In section 2, I will show the methods that can be used to
-grow and maintain the R-Tree structure. In section 3, I will show the performance
-results when it is used in the biochemical simulation. In seciton 4, I will make
-a summary of this paper and introduce the library to use my method in C++.
 
 \begin{figure}[hbt]
     \includegraphics[width=6.5cm, bb=0 0 567 567]{fig1.eps}
-    \caption{this is an example figure for the R-Tree structure}
+    \caption{Methods to handle R-Tree on periodic boundary conditions. (\textbf{A})
+    By copying the unit cell for each dimension along periodicity, normal R-Tree
+    can manage objects that are associated with periodic images. (\textbf{B}) By
+    adding extensional query translated for each periodic images, R-Tree can
+    detect objects that are beyond boundary. (\textbf{C}) This is the method proposed
+    in this paper. Forming rectangles according to the periodicity, R-Tree can
+    organize objects on periodic boundary conditions.}
     \label{fig1}
 \end{figure}
 
+Here I propose the novel method to apply PBCs to R-Tree. The main idea is
+applying the PBCs to each operations for AABBs that are performed in each steps to
+maintain an R-Tree. With this method, it is not needed to copy objects or
+queries at all. Moreover, using the information about the boundary condition,
+it is expected that the size of each AABBs associated with each nodes decreases
+relative to the other methods, suggesting that the spatial search become more
+efficient.
+
+In section 2, I provide the methods that can be used to grow and maintain the
+R-Tree structure. I present the performance results when it is used in the
+biochemical simulation in section 3. I make a summary of this paper in section 4.
+
 \section*{Methods}
 
+The operations that are provided in this paper is for handling and modifying
+AABBs on PBCs. I do not modify the algorithm to grow and maintain an R-Tree at all.
+Hence, in this setion, I do not show algorithm to form R-Tree. The main algorithm
+used to form R-Tree is completely same as Guttman's quadratic algorithm.
+It means that the operations can potentially be applied for some R-Tree variants
+and the other spatial indexing methods that uses AABBs.
+
 \paragraph{Representation of an AABB.}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam bibendum
-finibus diam, gravida sagittis lorem gravida vitae. Interdum et malesuada fames
-ac ante ipsum primis in faucibus. Nulla in diam tristique ante posuere
-tristique. Donec interdum purus sit amet nisl accumsan consectetur. Fusce
-aliquet libero mi, quis ornare dolor congue ullamcorper. Nulla nulla urna,
-molestie in urna sed, lacinia volutpat eros. Ut mi libero, elementum scelerisque
-ipsum vel, hendrerit fermentum turpis. Aliquam sit amet leo sodales, egestas
-augue id, fermentum nulla. Aenean vel cursus ante, et pellentesque eros. Nulla
-ac neque nec justo posuere commodo sit amet sit amet justo. Aliquam tincidunt
-tempor ex nec tincidunt. In ullamcorper vehicula lobortis.
+There are some options to represent an AABB. To handle AABBs on PBCs efficiently,
+here I represent AABBs as pairs of upper and lower limits in each dimensions
+(figure \ref{fig2}A).
+
+Restricting positions of both upper and lower limit to inside of the boundary,
+the coordinate of upper limit can be lesser than that of lower limit if the AABB
+locates over the boundary (figure \ref{fig2}BC). Using this feature, the actual
+range occupied by the AABB can be determined easily (alrogithm\ref{span}).
+If the upper coordinate is same as lower coordinate, it means sizeless box.
+
+\begin{algorithm}
+    \caption{calculate the range occupied by the AABB}
+    \label{span}
+    \begin{algorithmic}
+        \Require upper, lower, boundary
+        \Ensure  span
+        \If{$\mathrm{upper} < \mathrm{lower}$}
+            \State span $\gets$ upper $-$ lower $+$ boundary.span
+        \Else
+            \State span $\gets$ upper $-$ lower
+        \EndIf
+    \end{algorithmic}
+\end{algorithm}
+
+% pseudo-code needed
+% adjust_box(lower, upper, boundary)
 
 \paragraph{Expanding AABBs on PBCs.}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam bibendum
-finibus diam, gravida sagittis lorem gravida vitae. Interdum et malesuada fames
-ac ante ipsum primis in faucibus. Nulla in diam tristique ante posuere
-tristique. Donec interdum purus sit amet nisl accumsan consectetur. Fusce
-aliquet libero mi, quis ornare dolor congue ullamcorper. Nulla nulla urna,
-molestie in urna sed, lacinia volutpat eros. Ut mi libero, elementum scelerisque
-ipsum vel, hendrerit fermentum turpis. Aliquam sit amet leo sodales, egestas
-augue id, fermentum nulla. Aenean vel cursus ante, et pellentesque eros. Nulla
-ac neque nec justo posuere commodo sit amet sit amet justo. Aliquam tincidunt
-tempor ex nec tincidunt. In ullamcorper vehicula lobortis.
+Expanding an AABB so that it contains other object completely is one of the most
+important operations done in R-Tree. Because the total area that is covered by
+AABBs in the nodes of R-Tree affects the efficiency of spatial searching, it is
+needed to find the way to make the expanded area as small as possible.
+
+I propose an algorithm to find minimum expansion of AABB to contain AABB or point.
 
 % \begin{center}
 \begin{eqnarray}
