@@ -82,14 +82,21 @@ memory $3^D$ fold a lot (here $D$ reprecents a number of dimension). Figure
 copying query AABB in the same manner as copying whole system.
 
 \begin{figure}[hbt]
-    \includegraphics[width=6.5cm, bb=0 0 567 567]{fig1.eps}
-    \caption{Methods to handle R-Tree on periodic boundary conditions. (\textbf{A})
+    \includegraphics[width=8.4cm, bb=6 3 220 224]{fig1.eps}
+    \caption{Methods to handle R-Tree on periodic boundary conditions.
+    (\textbf{A})
     By copying the unit cell for each dimension along periodicity, normal R-Tree
-    can manage objects that are associated with periodic images. (\textbf{B}) By
-    adding extensional query translated for each periodic images, R-Tree can
-    detect objects that are beyond boundary. (\textbf{C}) This is the method proposed
-    in this paper. Forming rectangles according to the periodicity, R-Tree can
-    organize objects on periodic boundary conditions.}
+    can manage objects that are associated with periodic images.
+    (\textbf{B})
+    By adding extensional query translated for each periodic images, R-Tree can
+    detect objects that are beyond boundary.
+    (\textbf{C})
+    With the method described in \textbf{B}, finite sized objects could be
+    overlooked when queries that is inside of the boundary are not copied.
+    (\textbf{D})
+    This is the method proposed in this paper. Forming rectangles according to
+    the periodicity, R-Tree can organize objects on periodic boundary
+    conditions.}
     \label{fig1}
 \end{figure}
 
@@ -114,6 +121,11 @@ used to form R-Tree is completely same as Guttman's quadratic algorithm.
 It means that the operations can potentially be applied for some R-Tree variants
 and the other spatial indexing methods that uses AABBs.
 
+Because the rectangles that are used in R-Tree are all axis-aligned, it is
+enough to show the operation for one dimension to provide the whole algorithm.
+Applying these procedure to all the dimensions, these operations can easily be
+extended for high-dimensional cases.
+
 \paragraph{Representation of an AABB.}
 There are some options to represent an AABB. To handle AABBs on PBCs efficiently,
 here I represent AABBs as pairs of upper and lower limits in each dimensions
@@ -122,40 +134,96 @@ here I represent AABBs as pairs of upper and lower limits in each dimensions
 Restricting positions of both upper and lower limit to inside of the boundary,
 the coordinate of upper limit can be lesser than that of lower limit if the AABB
 locates over the boundary (figure \ref{fig2}BC). Using this feature, the actual
-range occupied by the AABB can be determined easily (alrogithm\ref{span}).
+range occupied by the AABB can be determined easily (algorithm\ref{span}).
 If the upper coordinate is same as lower coordinate, it means sizeless box.
 
 \begin{algorithm}
     \caption{calculate the range occupied by the AABB}
     \label{span}
     \begin{algorithmic}
-        \Require upper, lower, boundary
-        \Ensure  span
-        \If{$\mathrm{upper} < \mathrm{lower}$}
-            \State span $\gets$ upper $-$ lower $+$ boundary.span
-        \Else
-            \State span $\gets$ upper $-$ lower
-        \EndIf
+        \State $L  \gets$ lower limit of the box
+        \State $U  \gets$ upper limit of the box
+        \State $BL \gets$ lower limit of the boundary
+        \State $BU \gets$ upper limit of the boundary
+        \Function{Span}{$L, U, BL, BU$}
+            \If{$U < L$}
+                \State $span \gets U - L + (BU - BL)$
+            \Else
+                \State $span \gets U - L$
+            \EndIf
+            \State \Return span
+        \EndFunction
     \end{algorithmic}
 \end{algorithm}
 
-% pseudo-code needed
-% adjust_box(lower, upper, boundary)
+To ensure the requirements for AABBs described above, I present a function to
+put AABBs inside of the boundary (algorithm\ref{adjust_box}). It checks each
+boundary is within the boundary and adjust its position along the conditions.
+
+\begin{algorithm}
+    \caption{adjsut upper and lower limit positions of the AABB on PBCs}
+    \label{adjust_box}
+    \begin{algorithmic}
+        \State $L  \gets$ lower limit of the box
+        \State $U  \gets$ upper limit of the box
+        \State $BL \gets$ lower limit of the boundary
+        \State $BU \gets$ upper limit of the boundary
+        \Function{AdjustBox}{$L, U, BL, BU$}
+            \If{$U - L \geq BU - BL$}
+                \State $L \gets BL$
+                \State $U \gets BU$
+            \ElsIf{$L < BL$}
+                \State $L \gets L + (BU - BL)$
+            \ElsIf{$BU < U$}
+                \State $U \gets U - (BU - BL)$
+            \EndIf
+            \State \Return
+        \EndFunction
+     \end{algorithmic}
+\end{algorithm}
 
 \paragraph{Expanding AABBs on PBCs.}
 Expanding an AABB so that it contains other object completely is one of the most
-important operations done in R-Tree. Because the total area that is covered by
+important operations done to form R-Tree. Because the total area that is covered by
 AABBs in the nodes of R-Tree affects the efficiency of spatial searching, it is
 needed to find the way to make the expanded area as small as possible.
 
-I propose an algorithm to find minimum expansion of AABB to contain AABB or point.
+The algorithm to find minimum expansion of AABB to contain another AABB is shown
+in algorithm \ref{expand_aabb_aabb}. The size of bounding box that contains two
+rectangles can be calculated as a sum of distance between two centroids of the
+rectangles and half-width of the two rectangles (figure \ref{fig-bounding-box}).
+Hense, the minimum bounding box on PBCs can be determined by calculating
+minimum distance between two centroids of rectangles.
 
-% \begin{center}
-\begin{eqnarray}
-    f(x) &=& \mathrm{e}^x \nonumber\\
-    g(x) &=& \log(x)      \nonumber
-\end{eqnarray}
-% \end{center}
+\begin{algorithm}
+    \caption{expand AABB so that it contains another AABB}
+    \label{expand_aabb_aabb}
+    \begin{algorithmic}
+        \State $L1 \gets$ lower limit of the box1
+        \State $U1 \gets$ upper limit of the box1
+        \State $L2 \gets$ lower limit of the box2
+        \State $U2 \gets$ upper limit of the box2
+        \State $BL \gets$ lower limit of the boundary
+        \State $BU \gets$ upper limit of the boundary
+        \Function{ExpandAABB}{$L1, U1, L2, U2, BL, BU$}
+            \State $s1 \gets$ \Call{Span}{L1, U1, BL, BU}
+            \State $s2 \gets$ \Call{Span}{L2, U2, BL, BU}
+            \State $c1 \gets$ \Call{Centroid}{L1, U1, BL, BU}
+            \State $c2 \gets$ \Call{Centroid}{L2, U2, BL, BU}
+            \State $dc \gets$ \Call{AdjustDirection}{c1, c2, BL, BU}
+
+            \State $l1 \gets c1 - s1 / 2$
+            \State $u1 \gets c1 + s1 / 2$
+            \State $l2 \gets c1 + dc - s2 / 2$
+            \State $u2 \gets c1 + dc + s2 / 2$
+
+            \State $L1 \gets min(l1, l2)$
+            \State $U1 \gets max(u1, u2)$
+            \State \Call{AdjustBox}{L1, U1, BL, BU}
+            \State \Return
+        \EndFunction
+     \end{algorithmic}
+\end{algorithm}
 
 \paragraph{Checking whether AABB is inside of the other AABB on PBCs.}
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam bibendum
