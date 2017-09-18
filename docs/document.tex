@@ -38,12 +38,13 @@
     which are performed mostly on periodic boundary conditions.
     An R-Tree is a widely used tree data structure to manage spatial objects and
     it is capable of answering to spatial searching queries in an efficient way.
-    Currently, several methods that introduces external copies of objects or
-    queries to use an R-Tree on periodic boundary conditions have been proposed.
-    In this paper, I propose a new method to construct R-Tree on the periodic
+%     Currently, several methods to use an R-Tree on periodic boundary conditions
+%     have been proposed. Those methods introduce external copies of objects or
+%     queries.
+    In this paper, I propose a new method to construct R-Tree along the periodic
     boundary conditions by introducing a set of operations for rectangles.
-    This method works without any kind of additional copies of objects or
-    queries.
+    Unlike existing methods, this method works without any kind of additional
+    copies of objects or queries.
     Moreover, because this method reduces the size of bounding boxes for each
     nodes of R-Tree in the natural way along the periodic boundary conditions,
     it is expected to increase the efficiency of processing spatial queries.
@@ -61,19 +62,23 @@ as investigating behaviors of complex biochemical models. To perform such a larg
 scale simulation, both huge amount of computational resources and efficient
 simulation softwares are required.
 
-In most cases, spatial search for objects satisfying certain geometrical
-conditions is one of the most costly processes in the simulation. Generally, an
-efficient method for spatial search drastically accelerates not only the whole
-simulation processes, but also the data analysis of simulation results.
+In most cases, searching for objects that satisfy some geometrical conditions
+is one of the most costly operation in the simulation. Generally, an efficient
+method for spatial search drastically accelerates not only the whole simulation
+processes, but also the data analysis of simulation results. Therefore, a method
+that accelerates spatial searching also accelerates whole process of scientific
+simulation research.
 
 An R-Tree is a widely used data structure representing bounding volume
 hierarchies (BVH) by using axis-aligned bounding box (AABB) for all its entries
-\cite{Guttman1984}. As its efficiency, many variants have been proposed and is
-applied for many problems in broad range of fields.
-\textcolor{red}{citation needed}.
+\cite{Guttman1984}. It is capable of containing both sizeless and finite sized
+objects such as points, segments, spheres and etc. As its efficiency, many
+variants have been proposed and are applied for many problems in a broad range
+of fields.
 
 In order to use it with periodic boundary conditions (PBCs), currently,
-two methods are proposed\cite{CoSTR-R-tree2016}. The method visually described in
+two methods are proposed (figure\ref{fig1})\cite{CoSTR-R-tree2016}.
+The method visually described in
 figure \ref{fig1}A copies all the objects in the simulation system
 along each periodic boundaries. Although it can search objects associated with
 the adjacent periodic images in the same way as normal R-Tree, it consumes
@@ -116,15 +121,66 @@ biochemical simulation in section 3. I make a summary of this paper in section 4
 
 The operations that are provided in this paper is for handling and modifying
 AABBs on PBCs. I do not modify the algorithm to grow and maintain an R-Tree at all.
-Hence, in this setion, I do not show algorithm to form R-Tree. The main algorithm
-used to form R-Tree is completely same as Guttman's quadratic algorithm.
+Hence, in this setion, I do not show algorithm to construct R-Tree itself.
+The main algorithm used to make R-Tree in section 3 is completely same as Guttman's
+quadratic algorithm.
 It means that the operations can potentially be applied for some R-Tree variants
 and the other spatial indexing methods that uses AABBs.
 
-Because the rectangles that are used in R-Tree are all axis-aligned, it is
+Because the rectangles that are used in R-Tree are axis-aligned, it is
 enough to show the operation for one dimension to provide the whole algorithm.
-Applying these procedure to all the dimensions, these operations can easily be
+Applying those procedure to each dimensions, these operations can easily be
 extended for high-dimensional cases.
+
+\paragraph{Representation of the PBCs.}
+In this paper, I consider only cuboids as a unit cell of the PBCs.
+To describe the boundary conditions, it is enough to show the shape of the unit
+cell. As a rectangle, I represent the unit cell as a pair of coordinates showing
+upper and lower limit. For efficiency, caching the width of the unit cell in
+each dimension might be useful.
+
+To restrict the coordinates to the unit cell, I use the function described in
+algorithm\ref{restrict_position}. For the inter coordinate direction, I use the
+function shown in algorithm\ref{calc_direction}. 
+
+\begin{algorithm}
+    \caption{restrict coordinate to the unit cell of PBCs.}
+    \label{restrict_position}
+    \begin{algorithmic}
+        \State $X  \gets$ coordinate to restrict
+        \State $BL \gets$ lower limit of the boundary
+        \State $BU \gets$ upper limit of the boundary
+        \Function{RestrictPosition}{$X, BL, BU$}
+            \State $size \gets BU - BL$
+            \If{$X < BL$}
+                \State $X \gets X + size$
+            \ElsIf{$X \geq BU$}
+                \State $X \gets X - size$
+            \EndIf
+        \EndFunction
+     \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+    \caption{calculate inter-positional vector on the PBC.}
+    \label{calc_direction}
+    \begin{algorithmic}
+        \State $X1 \gets$ coordinate of starting position
+        \State $X2 \gets$ coordinate of stopping position
+        \State $BL \gets$ lower limit of the boundary
+        \State $BU \gets$ upper limit of the boundary
+        \Function{CalcDirection}{$X1, X2, BL, BU$}
+            \State $dx \gets X2 - X1$
+            \State $size \gets BU - BL$
+            \If{$dx > size / 2$}
+                \State $dx \gets dx - size$
+            \ElsIf{$dx \leq -size / 2$}
+                \State $dx \gets dx + size$
+            \EndIf
+            \State \Return $dx$
+        \EndFunction
+     \end{algorithmic}
+\end{algorithm}
 
 \paragraph{Representation of an AABB.}
 There are some options to represent an AABB. To handle AABBs on PBCs efficiently,
@@ -156,6 +212,25 @@ If the upper coordinate is same as lower coordinate, it means sizeless box.
     \end{algorithmic}
 \end{algorithm}
 
+By using the algorithm\ref{span}, the centroid of an AABB can be calculated
+easily(algorithm\ref{centroid}).
+
+\begin{algorithm}
+    \caption{calculate the centroid of an AABB}
+    \label{centroid}
+    \begin{algorithmic}
+        \State $L  \gets$ lower limit of the box
+        \State $U  \gets$ upper limit of the box
+        \State $BL \gets$ lower limit of the boundary
+        \State $BU \gets$ upper limit of the boundary
+        \Function{Centroid}{$L, U, BL, BU$}
+            \State $sp \gets$ \Call{Span}{L, U, BL, BU}
+            \State $c  \gets$ L + sp / 2
+            \State \Return \Call{RestrictPosition}{c, BL, BU}
+        \EndFunction
+    \end{algorithmic}
+\end{algorithm}
+
 To ensure the requirements for AABBs described above, I present a function to
 put AABBs inside of the boundary (algorithm\ref{adjust_box}). It checks each
 boundary is within the boundary and adjust its position along the conditions.
@@ -168,7 +243,7 @@ boundary is within the boundary and adjust its position along the conditions.
         \State $U  \gets$ upper limit of the box
         \State $BL \gets$ lower limit of the boundary
         \State $BU \gets$ upper limit of the boundary
-        \Function{AdjustBox}{$L, U, BL, BU$}
+        \Function{RestrictBox}{$L, U, BL, BU$}
             \If{$U - L \geq BU - BL$}
                 \State $L \gets BL$
                 \State $U \gets BU$
@@ -210,7 +285,7 @@ minimum distance between two centroids of rectangles.
             \State $s2 \gets$ \Call{Span}{L2, U2, BL, BU}
             \State $c1 \gets$ \Call{Centroid}{L1, U1, BL, BU}
             \State $c2 \gets$ \Call{Centroid}{L2, U2, BL, BU}
-            \State $dc \gets$ \Call{AdjustDirection}{c1, c2, BL, BU}
+            \State $dc \gets$ \Call{CalcDirection}{c1, c2, BL, BU}
 
             \State $l1 \gets c1 - s1 / 2$
             \State $u1 \gets c1 + s1 / 2$
@@ -219,7 +294,7 @@ minimum distance between two centroids of rectangles.
 
             \State $L1 \gets min(l1, l2)$
             \State $U1 \gets max(u1, u2)$
-            \State \Call{AdjustBox}{L1, U1, BL, BU}
+            \State \Call{RestrictBox}{L1, U1, BL, BU}
             \State \Return
         \EndFunction
      \end{algorithmic}
