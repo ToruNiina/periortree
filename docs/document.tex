@@ -45,9 +45,6 @@
     which are performed mostly on periodic boundary conditions.
     An R-Tree is a widely used tree data structure to manage spatial objects and
     it is capable of answering to spatial searching queries in an efficient way.
-%     Currently, several methods to use an R-Tree on periodic boundary conditions
-%     have been proposed. Those methods introduce external copies of objects or
-%     queries.
     In this paper, I propose a new method to construct R-Tree along the periodic
     boundary conditions by introducing a set of operations for rectangles.
     Unlike existing methods, this method works without any kind of additional
@@ -55,11 +52,9 @@
     Moreover, because this method reduces the size of bounding boxes for each
     nodes of R-Tree in the natural way along the periodic boundary conditions,
     it is expected to increase the efficiency of processing spatial queries.
-    Here I introduce the operations to Guttman's original R-Tree but it can
-    essentially be applied to the other kind of algorithm if it handles
-    recutangles on the periodic boudary conditions.
-    The implementation is available on GitHub.
-
+    The method can essentially be applied not only to Guttman's original R-Tree
+    but also to the other kind of algorithm if it handles recutangles on the
+    periodic boudary conditions. The implementation is available on GitHub.
     \bigskip
 ]
 
@@ -70,8 +65,11 @@ Computational simulations are the essential tools for scientific research, such
 as investigating behaviors of complex biochemical models. To perform such a large
 scale simulation, both huge amount of computational resources and efficient
 simulation softwares are required.
-\blfootnote{This work is licensed under a Creative Commons BY-NC-ND.
-            https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode}
+\blfootnote{
+This paper is distributed under a Creative Commons BY-NC-ND.
+To see the full text of the license, see
+https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode.
+}
 
 In most cases, searching for objects that satisfy some geometrical conditions
 is one of the most costly operation in the simulation. Generally, an efficient
@@ -106,7 +104,8 @@ Here I propose the novel method to apply PBCs to R-Tree. The main idea is
 applying the PBCs to each operations for AABBs that are performed in each steps
 to maintain an R-Tree. Allowing the AABBs of each nodes to extend in a periodic
 manner, the R-Tree become capable of containing objects in the most natural way
-on PBCs (figure\ref{fig1}D). With this method, it is not needed to copy objects
+on PBCs to overcome the limitation of containing finite sized object
+(figure\ref{fig1}CD). With this method, it is not needed to copy objects
 or queries at all. Moreover, using the information about the boundary condition,
 it is expected that the size of each AABBs associated with each nodes decreases
 relative to the other methods, suggesting that the spatial search become more
@@ -130,10 +129,6 @@ efficient.
     conditions.}
     \label{fig1}
 \end{figure}
-
-In section 2, I provide the methods that can be used to grow and maintain the
-R-Tree structure. I present the performance results when it is used in the
-biochemical simulation in section 3. I make a summary of this paper in section 4.
 
 \section*{Methods}
 
@@ -225,15 +220,15 @@ algorithm ~\ref{expand_aabb_point}.
         \State $R \gets$ original rectangle
         \State $P \gets$ point
         \State $B \gets$ boundary
-        \Function{ExpandAABB}{$R1, R2, B$}
-            \State $dc \gets P - R1.centroid$
+        \Function{ExpandAABB}{$R, P, B$}
+            \State $dc \gets P - R.centroid$
             \State $dc \gets$ \Call{RestrictVector}{dc, B}
 
-            \State $l1 \gets R1.centroid - R1.width / 2$
-            \State $u1 \gets R1.centroid + R1.width / 2$
+            \State $l \gets R.centroid - R.width / 2$
+            \State $u \gets R.centroid + R.width / 2$
 
-            \State $L \gets min(l1, P)$
-            \State $U \gets max(u1, P)$
+            \State $L \gets min(l, P)$
+            \State $U \gets max(u, P)$
             \State $C \gets (L + U) / 2$
             \State $W \gets U - L$
 
@@ -243,17 +238,63 @@ algorithm ~\ref{expand_aabb_point}.
      \end{algorithmic}
 \end{algorithm}
 
-\paragraph{Checking whether object is inside of the AABB on PBCs.}
+\paragraph{Detecting an object includes or intersects the other object}
 
 To find an object in an R-Tree, it is needed to check an object is inside of
-an rectangle.
+an rectangle. Whether an object includes or intersects the other object can be
+determined by using the minimum distance between centroids of the objects.
+Figure ~\ref{fig-geometrical-relationship} graphically shows the idea of each
+algorithms in 1 dimension.
 
+\begin{algorithm}
+    \caption{Check whether an AABB is inside of an AABB}
+    \label{expand_aabb_point}
+    \begin{algorithmic}
+        \State $R1 \gets$ rectangle
+        \State $R2 \gets$ rectangle that might be inside of R1
+        \State $B  \gets$ boundary
+        \Function{IsAABBInsideOfAABB}{$R1, R2, B$}
+            \State $dc \gets R1.centroid - R2.centroid$
+            \State $dc \gets$ \Call{RestrictVector}{dc, B}
 
+            \State \Return $\mathrm{abs}(dc) \leq (R1.width - R2.width) / 2$
+        \EndFunction
+     \end{algorithmic}
+\end{algorithm}
 
-\paragraph{Checking whether object intersects to the AABB on PBCs.}
+\begin{algorithm}
+    \caption{Check whether a point is inside of an AABB}
+    \label{expand_aabb_point}
+    \begin{algorithmic}
+        \State $R \gets$ rectangle
+        \State $P \gets$ point
+        \State $B \gets$ boundary
+        \Function{IsPointInsideOfAABB}{$R, P, B$}
+            \State $dc \gets R.centroid - P$
+            \State $dc \gets$ \Call{RestrictVector}{dc, B}
+            \State \Return $\mathrm{abs}(dc) \leq (R.width) / 2$
+        \EndFunction
+     \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+    \caption{Check whether an AABB intersects to another AABB}
+    \label{intersect_aabb_point}
+    \begin{algorithmic}
+        \State $R1 \gets$ rectangle
+        \State $R2 \gets$ rectangle that might intersect to R1
+        \State $B  \gets$ boundary
+        \Function{IsAABBIntersectsAABB}{$R1, R2, B$}
+            \State $dc \gets R.centroid - R.centroid$
+            \State $dc \gets$ \Call{RestrictVector}{dc, B}
+            \State \Return $\mathrm{abs}(dc) \leq (R1.width + R2.width) / 2$
+        \EndFunction
+     \end{algorithmic}
+\end{algorithm}
 
 \section*{Results}
-\subsection*{subsection 1}
+
+\subsection*{subsection}
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam bibendum
 finibus diam, gravida sagittis lorem gravida vitae. Interdum et malesuada fames
 ac ante ipsum primis in faucibus. Nulla in diam tristique ante posuere
@@ -265,30 +306,27 @@ augue id, fermentum nulla. Aenean vel cursus ante, et pellentesque eros. Nulla
 ac neque nec justo posuere commodo sit amet sit amet justo. Aliquam tincidunt
 tempor ex nec tincidunt. In ullamcorper vehicula lobortis.
 
-\subsection*{subsection 2}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam bibendum
-finibus diam, gravida sagittis lorem gravida vitae. Interdum et malesuada fames
-ac ante ipsum primis in faucibus. Nulla in diam tristique ante posuere
-tristique. Donec interdum purus sit amet nisl accumsan consectetur. Fusce
-aliquet libero mi, quis ornare dolor congue ullamcorper. Nulla nulla urna,
-molestie in urna sed, lacinia volutpat eros. Ut mi libero, elementum scelerisque
-ipsum vel, hendrerit fermentum turpis. Aliquam sit amet leo sodales, egestas
-augue id, fermentum nulla. Aenean vel cursus ante, et pellentesque eros. Nulla
-ac neque nec justo posuere commodo sit amet sit amet justo. Aliquam tincidunt
-tempor ex nec tincidunt. In ullamcorper vehicula lobortis.
+\section*{Conclusion}
 
-\section*{Discussion}
+In this paper, the novel method for applying PBCs to Guttman's R-Tree is
+introduced. Proposed method is capable of containing not only sizeless points but also
+objects with finite size. The method can remove the necessity of storing
+extensional objects or replicating queries. Moreover, it reduces the size of
+each node in the natural way on PBCs.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam bibendum
-finibus diam, gravida sagittis lorem gravida vitae. Interdum et malesuada fames
-ac ante ipsum primis in faucibus. Nulla in diam tristique ante posuere
-tristique. Donec interdum purus sit amet nisl accumsan consectetur. Fusce
-aliquet libero mi, quis ornare dolor congue ullamcorper. Nulla nulla urna,
-molestie in urna sed, lacinia volutpat eros. Ut mi libero, elementum scelerisque
-ipsum vel, hendrerit fermentum turpis. Aliquam sit amet leo sodales, egestas
-augue id, fermentum nulla. Aenean vel cursus ante, et pellentesque eros. Nulla
-ac neque nec justo posuere commodo sit amet sit amet justo. Aliquam tincidunt
-tempor ex nec tincidunt. In ullamcorper vehicula lobortis.
+On the other hand, the method introduces tiny but additional costs into each
+procedures for maintaining R-Tree and checking geometrical conditions because it
+considers the PBCs for all of the procedure. It might decrease the efficiency of
+the R-Tree in some case.
+
+As described before, since the method is only for modifying and handling
+rectangles on PBCs, it can essentially be applied for the other R-Tree variants
+or the other kind of spatial indexing methods.
+
+Because the adaptation of spatial indexing to a system on PBCs has a chance to
+accelerate many kind of sientific simulations, it is expected that this novel
+method will have an important role for the simulations that will be performed in
+the next decade.
 
 \bibliographystyle{plain}
 \bibliography{library}{}
