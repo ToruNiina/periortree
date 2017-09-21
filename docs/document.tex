@@ -10,7 +10,14 @@
 \usepackage{algorithm}
 \usepackage{graphicx}
 \usepackage{color} % ex.) \textcolor{color}{text}
+\usepackage{lipsum}
 
+\newcommand\blfootnote[1]{%
+    \begingroup
+    \renewcommand\thefootnote{}\footnote{#1}%
+    \addtocounter{footnote}{-1}%
+    \endgroup
+}
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
 
@@ -52,8 +59,10 @@
     essentially be applied to the other kind of algorithm if it handles
     recutangles on the periodic boudary conditions.
     The implementation is available on GitHub.
+
     \bigskip
 ]
+
 
 \section*{Introduction}
 
@@ -61,6 +70,8 @@ Computational simulations are the essential tools for scientific research, such
 as investigating behaviors of complex biochemical models. To perform such a large
 scale simulation, both huge amount of computational resources and efficient
 simulation softwares are required.
+\blfootnote{This work is licensed under a Creative Commons BY-NC-ND.
+            https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode}
 
 In most cases, searching for objects that satisfy some geometrical conditions
 is one of the most costly operation in the simulation. Generally, an efficient
@@ -120,182 +131,107 @@ biochemical simulation in section 3. I make a summary of this paper in section 4
 \section*{Methods}
 
 The operations that are provided in this paper is for handling and modifying
-AABBs on PBCs. I do not modify the algorithm to grow and maintain an R-Tree at all.
+AABBs on PBCs.
+I do not modify the algorithm to grow and maintain an R-Tree at all.
 Hence, in this setion, I do not show algorithm to construct R-Tree itself.
-The main algorithm used to make R-Tree in section 3 is completely same as Guttman's
-quadratic algorithm.
-It means that the operations can potentially be applied for some R-Tree variants
-and the other spatial indexing methods that uses AABBs.
+The main algorithm used to make an R-Tree for performance measuring is
+completely same as original Guttman's quadratic algorithm.
+It means that the operations can potentially be applied for some of the R-Tree
+variants and the other spatial indexing methods that uses AABBs.
 
 Because the rectangles that are used in R-Tree are axis-aligned, it is
 enough to show the operation for one dimension to provide the whole algorithm.
-Applying those procedure to each dimensions, these operations can easily be
-extended for high-dimensional cases.
+Applying those procedure to each dimensions successively, these operations can
+easily be extended for higher dimension cases.
 
 \paragraph{Representation of the PBCs.}
-In this paper, I consider only cuboids as a unit cell of the PBCs.
-To describe the boundary conditions, it is enough to show the shape of the unit
-cell. As a rectangle, I represent the unit cell as a pair of coordinates showing
-upper and lower limit. For efficiency, caching the width of the unit cell in
-each dimension might be useful.
+As an unit cell of the PBCs, I consider only cuboids so that it become
+drastically easier to handle rectangles on the condition.
+I restrict coordinates of all the objects to inside of the unit cell.
+There are well-known alrogithm to restrict coordinates and vectors to the unit
+cell. In this paper, I call them as \textbf{RestrictPosition} and
+\textbf{RestrictVector}, respectively.
 
-To restrict the coordinates to the unit cell, I use the function described in
-algorithm\ref{restrict_position}. For the inter coordinate direction, I use the
-function shown in algorithm\ref{calc_direction}. 
+\paragraph{Representation of an rectangles.}
+There are some options to represent an rectangle such as a pair of coordinates
+describing upper and lower limit in each dimensions, a pair of coordinate and
+vector describing its characteristic position and width of rectangle in each
+dimension. Because the method proposed in this paper quite often uses centroids
+of rectangles, here I represent a rectangle as a pair of centroid position and
+width vector (figure \ref{fig2}).
 
-\begin{algorithm}
-    \caption{restrict coordinate to the unit cell of PBCs.}
-    \label{restrict_position}
-    \begin{algorithmic}
-        \State $X  \gets$ coordinate to restrict
-        \State $BL \gets$ lower limit of the boundary
-        \State $BU \gets$ upper limit of the boundary
-        \Function{RestrictPosition}{$X, BL, BU$}
-            \State $size \gets BU - BL$
-            \If{$X < BL$}
-                \State $X \gets X + size$
-            \ElsIf{$X \geq BU$}
-                \State $X \gets X - size$
-            \EndIf
-        \EndFunction
-     \end{algorithmic}
-\end{algorithm}
+\begin{equation}
+    rectangle = \{centroid, width\}
+\end{equation}
 
-\begin{algorithm}
-    \caption{calculate inter-positional vector on the PBC.}
-    \label{calc_direction}
-    \begin{algorithmic}
-        \State $X1 \gets$ coordinate of starting position
-        \State $X2 \gets$ coordinate of stopping position
-        \State $BL \gets$ lower limit of the boundary
-        \State $BU \gets$ upper limit of the boundary
-        \Function{CalcDirection}{$X1, X2, BL, BU$}
-            \State $dx \gets X2 - X1$
-            \State $size \gets BU - BL$
-            \If{$dx > size / 2$}
-                \State $dx \gets dx - size$
-            \ElsIf{$dx \leq -size / 2$}
-                \State $dx \gets dx + size$
-            \EndIf
-            \State \Return $dx$
-        \EndFunction
-     \end{algorithmic}
-\end{algorithm}
-
-\paragraph{Representation of an AABB.}
-There are some options to represent an AABB. To handle AABBs on PBCs efficiently,
-here I represent AABBs as pairs of upper and lower limits in each dimensions
-(figure \ref{fig2}A).
-
-Restricting positions of both upper and lower limit to inside of the boundary,
-the coordinate of upper limit can be lesser than that of lower limit if the AABB
-locates over the boundary (figure \ref{fig2}BC). Using this feature, the actual
-range occupied by the AABB can be determined easily (algorithm\ref{span}).
-If the upper coordinate is same as lower coordinate, it means sizeless box.
-
-\begin{algorithm}
-    \caption{calculate the range occupied by the AABB}
-    \label{span}
-    \begin{algorithmic}
-        \State $L  \gets$ lower limit of the box
-        \State $U  \gets$ upper limit of the box
-        \State $BL \gets$ lower limit of the boundary
-        \State $BU \gets$ upper limit of the boundary
-        \Function{Span}{$L, U, BL, BU$}
-            \If{$U < L$}
-                \State $span \gets U - L + (BU - BL)$
-            \Else
-                \State $span \gets U - L$
-            \EndIf
-            \State \Return span
-        \EndFunction
-    \end{algorithmic}
-\end{algorithm}
-
-By using the algorithm\ref{span}, the centroid of an AABB can be calculated
-easily(algorithm\ref{centroid}).
-
-\begin{algorithm}
-    \caption{calculate the centroid of an AABB}
-    \label{centroid}
-    \begin{algorithmic}
-        \State $L  \gets$ lower limit of the box
-        \State $U  \gets$ upper limit of the box
-        \State $BL \gets$ lower limit of the boundary
-        \State $BU \gets$ upper limit of the boundary
-        \Function{Centroid}{$L, U, BL, BU$}
-            \State $sp \gets$ \Call{Span}{L, U, BL, BU}
-            \State $c  \gets$ L + sp / 2
-            \State \Return \Call{RestrictPosition}{c, BL, BU}
-        \EndFunction
-    \end{algorithmic}
-\end{algorithm}
-
-To ensure the requirements for AABBs described above, I present a function to
-put AABBs inside of the boundary (algorithm\ref{adjust_box}). It checks each
-boundary is within the boundary and adjust its position along the conditions.
-
-\begin{algorithm}
-    \caption{adjsut upper and lower limit positions of the AABB on PBCs}
-    \label{adjust_box}
-    \begin{algorithmic}
-        \State $L  \gets$ lower limit of the box
-        \State $U  \gets$ upper limit of the box
-        \State $BL \gets$ lower limit of the boundary
-        \State $BU \gets$ upper limit of the boundary
-        \Function{RestrictBox}{$L, U, BL, BU$}
-            \If{$U - L \geq BU - BL$}
-                \State $L \gets BL$
-                \State $U \gets BU$
-            \ElsIf{$L < BL$}
-                \State $L \gets L + (BU - BL)$
-            \ElsIf{$BU < U$}
-                \State $U \gets U - (BU - BL)$
-            \EndIf
-            \State \Return
-        \EndFunction
-     \end{algorithmic}
-\end{algorithm}
+Of course, all the representations have identical information, one can easily
+convert a certain representation to another.
 
 \paragraph{Expanding AABBs on PBCs.}
-Expanding an AABB so that it contains other object completely is one of the most
-important operations done to form R-Tree. Because the total area that is covered by
-AABBs in the nodes of R-Tree affects the efficiency of spatial searching, it is
-needed to find the way to make the expanded area as small as possible.
+Expanding an AABB to make it a minimal bounding box of its contents is one of
+the most important operations done to form R-Tree.
+Because the total area that is covered by AABBs in the nodes of R-Tree affects
+the efficiency of spatial searching, it is needed to find the way to make the
+expanded area as small as possible.
 
-The algorithm to find minimum expansion of AABB to contain another AABB is shown
-in algorithm \ref{expand_aabb_aabb}. The size of bounding box that contains two
-rectangles can be calculated as a sum of distance between two centroids of the
-rectangles and half-width of the two rectangles (figure \ref{fig-bounding-box}).
-Hense, the minimum bounding box on PBCs can be determined by calculating
-minimum distance between two centroids of rectangles.
+The algorithm to find the minimum expansion of AABB to contain another AABB on
+PBCs is shown in algorithm ~\ref{expand_aabb_aabb}.
+The size of bounding box that contains two rectangles is determined by the
+distance between their centroids (figure \ref{fig-expand-box}).
+Therefore, by restricting the vector between centroids, the minimum expansion
+can be found.
 
 \begin{algorithm}
     \caption{expand AABB so that it contains another AABB}
     \label{expand_aabb_aabb}
     \begin{algorithmic}
-        \State $L1 \gets$ lower limit of the box1
-        \State $U1 \gets$ upper limit of the box1
-        \State $L2 \gets$ lower limit of the box2
-        \State $U2 \gets$ upper limit of the box2
-        \State $BL \gets$ lower limit of the boundary
-        \State $BU \gets$ upper limit of the boundary
-        \Function{ExpandAABB}{$L1, U1, L2, U2, BL, BU$}
-            \State $s1 \gets$ \Call{Span}{L1, U1, BL, BU}
-            \State $s2 \gets$ \Call{Span}{L2, U2, BL, BU}
-            \State $c1 \gets$ \Call{Centroid}{L1, U1, BL, BU}
-            \State $c2 \gets$ \Call{Centroid}{L2, U2, BL, BU}
-            \State $dc \gets$ \Call{CalcDirection}{c1, c2, BL, BU}
+        \State $R1 \gets$ original rectangle
+        \State $R2 \gets$ rectangle to contain
+        \State $B  \gets$ boundary
+        \Function{ExpandAABB}{$R1, R2, B$}
+            \State $dc \gets R2.centroid - R1.centroid$
+            \State $dc \gets$ \Call{RestrictVector}{dc, B}
 
-            \State $l1 \gets c1 - s1 / 2$
-            \State $u1 \gets c1 + s1 / 2$
-            \State $l2 \gets c1 + dc - s2 / 2$
-            \State $u2 \gets c1 + dc + s2 / 2$
+            \State $l1 \gets R1.centroid - R1.width / 2$
+            \State $u1 \gets R1.centroid + R1.width / 2$
+            \State $l2 \gets (R1.centroid + dc) - R2.width / 2$
+            \State $u2 \gets (R1.centroid + dc) + R2.width / 2$
 
-            \State $L1 \gets min(l1, l2)$
-            \State $U1 \gets max(u1, u2)$
-            \State \Call{RestrictBox}{L1, U1, BL, BU}
-            \State \Return
+            \State $L \gets min(l1, l2)$
+            \State $U \gets max(u1, u2)$
+            \State $C \gets (L + U) / 2$
+            \State $W \gets U - L$
+
+            \State $C \gets$ \Call{RestrictPosition}{C, B}
+            \State \Return $\{C, W\}$
+        \EndFunction
+     \end{algorithmic}
+\end{algorithm}
+
+For the case of containing points, it become simpler as described in the
+algorithm ~\ref{expand_aabb_point}.
+
+\begin{algorithm}
+    \caption{expand AABB so that it contains a point}
+    \label{expand_aabb_point}
+    \begin{algorithmic}
+        \State $R \gets$ original rectangle
+        \State $P \gets$ point
+        \State $B \gets$ boundary
+        \Function{ExpandAABB}{$R1, R2, B$}
+            \State $dc \gets P - R1.centroid$
+            \State $dc \gets$ \Call{RestrictVector}{dc, B}
+
+            \State $l1 \gets R1.centroid - R1.width / 2$
+            \State $u1 \gets R1.centroid + R1.width / 2$
+
+            \State $L \gets min(l1, P)$
+            \State $U \gets max(u1, P)$
+            \State $C \gets (L + U) / 2$
+            \State $W \gets U - L$
+
+            \State $C \gets$ \Call{RestrictPosition}{C, B}
+            \State \Return $\{C, W\}$
         \EndFunction
      \end{algorithmic}
 \end{algorithm}
