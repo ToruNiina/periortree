@@ -89,13 +89,28 @@ of fields.
 
 In order to use it with periodic boundary conditions (PBCs), currently,
 two methods are proposed (figure\ref{fig1})\cite{CoSTR-R-tree2016}.
-The method visually described in
-figure \ref{fig1}A copies all the objects in the simulation system
-along each periodic boundaries. Although it can search objects associated with
-the adjacent periodic images in the same way as normal R-Tree, it consumes
-memory $3^D$ fold a lot (here $D$ reprecents a number of dimension). Figure
-\ref{fig1}B showes another method that contains only one image,
-copying query AABB in the same manner as copying whole system.
+The method visually described in figure \ref{fig1}A copies all the objects in
+the simulation system along each periodic boundaries.
+Although it can search objects associated with the adjacent periodic images in
+the same way as normal R-Tree, it consumes memory $3^D$ fold a lot (here $D$
+reprecents a number of dimension).
+Figure \ref{fig1}B showes another method that contains only one image,
+copying query AABB in the same manner as copying whole system if the query goes
+outside of the boundary.
+Although it works completely fine with sizeless particles, it has a problem to
+contain finite-sized objects. It might overlook objects if query is not copied
+when the query is inside of the boundary and objects extends beyond the unit
+cell (figure\ref{fig1}C).
+
+Here I propose the novel method to apply PBCs to R-Tree. The main idea is
+applying the PBCs to each operations for AABBs that are performed in each steps
+to maintain an R-Tree. Allowing the AABBs of each nodes to extend in a periodic
+manner, the R-Tree become capable of containing objects in the most natural way
+on PBCs (figure\ref{fig1}D). With this method, it is not needed to copy objects
+or queries at all. Moreover, using the information about the boundary condition,
+it is expected that the size of each AABBs associated with each nodes decreases
+relative to the other methods, suggesting that the spatial search become more
+efficient.
 
 \begin{figure}[hbt]
     \includegraphics[width=8.4cm, bb=6 3 220 224]{fig1.eps}
@@ -115,14 +130,6 @@ copying query AABB in the same manner as copying whole system.
     conditions.}
     \label{fig1}
 \end{figure}
-
-Here I propose the novel method to apply PBCs to R-Tree. The main idea is
-applying the PBCs to each operations for AABBs that are performed in each steps to
-maintain an R-Tree. With this method, it is not needed to copy objects or
-queries at all. Moreover, using the information about the boundary condition,
-it is expected that the size of each AABBs associated with each nodes decreases
-relative to the other methods, suggesting that the spatial search become more
-efficient.
 
 In section 2, I provide the methods that can be used to grow and maintain the
 R-Tree structure. I present the performance results when it is used in the
@@ -236,17 +243,14 @@ algorithm ~\ref{expand_aabb_point}.
      \end{algorithmic}
 \end{algorithm}
 
-\paragraph{Checking whether AABB is inside of the other AABB on PBCs.}
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam bibendum
-finibus diam, gravida sagittis lorem gravida vitae. Interdum et malesuada fames
-ac ante ipsum primis in faucibus. Nulla in diam tristique ante posuere
-tristique. Donec interdum purus sit amet nisl accumsan consectetur. Fusce
-aliquet libero mi, quis ornare dolor congue ullamcorper. Nulla nulla urna,
-molestie in urna sed, lacinia volutpat eros. Ut mi libero, elementum scelerisque
-ipsum vel, hendrerit fermentum turpis. Aliquam sit amet leo sodales, egestas
-augue id, fermentum nulla. Aenean vel cursus ante, et pellentesque eros. Nulla
-ac neque nec justo posuere commodo sit amet sit amet justo. Aliquam tincidunt
-tempor ex nec tincidunt. In ullamcorper vehicula lobortis.
+\paragraph{Checking whether object is inside of the AABB on PBCs.}
+
+To find an object in an R-Tree, it is needed to check an object is inside of
+an rectangle.
+
+
+
+\paragraph{Checking whether object intersects to the AABB on PBCs.}
 
 \section*{Results}
 \subsection*{subsection 1}
