@@ -58,7 +58,6 @@
     \bigskip
 ]
 
-
 \section*{Introduction}
 
 Computational simulations are the essential tools for scientific research, such
@@ -160,7 +159,7 @@ describing upper and lower limit in each dimensions, a pair of coordinate and
 vector describing its characteristic position and width of rectangle in each
 dimension. Because the method proposed in this paper quite often uses centroids
 of rectangles, here I represent a rectangle as a pair of centroid position and
-width vector (figure \ref{fig2}).
+width vector.
 
 \begin{equation}
     rectangle = \{centroid, width\}
@@ -179,16 +178,17 @@ expanded area as small as possible.
 The algorithm to find the minimum expansion of AABB to contain another AABB on
 PBCs is shown in algorithm ~\ref{expand_aabb_aabb}.
 The size of bounding box that contains two rectangles is determined by the
-distance between their centroids (figure \ref{fig-expand-box}).
-Therefore, by restricting the vector between centroids, the minimum expansion
-can be found.
+distance between their centroids because of the symmetry of rectangular shape.
+Therefore, by minimizing the distance between their centroids, the minimum
+expansion can be found. To minimize the distance between two points on PBCs,
+the \textbf{RestrictVector} can be used.
 
 \begin{algorithm}
     \caption{expand AABB so that it contains another AABB}
     \label{expand_aabb_aabb}
     \begin{algorithmic}
-        \State $R1 \gets$ original rectangle
-        \State $R2 \gets$ rectangle to contain
+        \State $R1 \gets$ bounding box
+        \State $R2 \gets$ rectangle to be contained
         \State $B  \gets$ boundary
         \Function{ExpandAABB}{$R1, R2, B$}
             \State $dc \gets R2.centroid - R1.centroid$
@@ -199,8 +199,8 @@ can be found.
             \State $l2 \gets (R1.centroid + dc) - R2.width / 2$
             \State $u2 \gets (R1.centroid + dc) + R2.width / 2$
 
-            \State $L \gets min(l1, l2)$
-            \State $U \gets max(u1, u2)$
+            \State $L \gets \Call{min}{l1, l2}$
+            \State $U \gets \Call{max}{u1, u2}$
             \State $C \gets (L + U) / 2$
             \State $W \gets U - L$
 
@@ -211,14 +211,16 @@ can be found.
 \end{algorithm}
 
 For the case of containing points, it become simpler as described in the
-algorithm ~\ref{expand_aabb_point}.
+algorithm ~\ref{expand_aabb_point}. By minimizing the distance between centroid
+of the rectangle and the point to be contained, the minimum expansion can be
+implemented.
 
 \begin{algorithm}
     \caption{expand AABB so that it contains a point}
     \label{expand_aabb_point}
     \begin{algorithmic}
-        \State $R \gets$ original rectangle
-        \State $P \gets$ point
+        \State $R \gets$ bounding box
+        \State $P \gets$ point to be contained
         \State $B \gets$ boundary
         \Function{ExpandAABB}{$R, P, B$}
             \State $dc \gets P - R.centroid$
@@ -227,8 +229,8 @@ algorithm ~\ref{expand_aabb_point}.
             \State $l \gets R.centroid - R.width / 2$
             \State $u \gets R.centroid + R.width / 2$
 
-            \State $L \gets min(l, P)$
-            \State $U \gets max(u, P)$
+            \State $L \gets \Call{min}{l, P}$
+            \State $U \gets \Call{max}{u, P}$
             \State $C \gets (L + U) / 2$
             \State $W \gets U - L$
 
@@ -243,8 +245,7 @@ algorithm ~\ref{expand_aabb_point}.
 To find an object in an R-Tree, it is needed to check an object is inside of
 an rectangle. Whether an object includes or intersects the other object can be
 determined by using the minimum distance between centroids of the objects.
-Figure ~\ref{fig-geometrical-relationship} graphically shows the idea of each
-algorithms in 1 dimension.
+Figure ~\ref{fig2} graphically shows the idea of each algorithms in 1 dimension.
 
 \begin{algorithm}
     \caption{Check whether an AABB is inside of an AABB}
@@ -256,7 +257,7 @@ algorithms in 1 dimension.
             \State $dc \gets R1.centroid - R2.centroid$
             \State $dc \gets$ \Call{RestrictVector}{dc, B}
 
-            \State \Return $\mathrm{abs}(dc) \leq (R1.width - R2.width) / 2$
+            \State \Return \Call{abs}{dc} $\leq (R1.width - R2.width) / 2$
         \EndFunction
      \end{algorithmic}
 \end{algorithm}
@@ -265,12 +266,12 @@ algorithms in 1 dimension.
     \caption{Check whether a point is inside of an AABB}
     \begin{algorithmic}
         \State $R \gets$ rectangle
-        \State $P \gets$ point
+        \State $P \gets$ point that might be inside of R
         \State $B \gets$ boundary
         \Function{IsPointInsideOfAABB}{$R, P, B$}
             \State $dc \gets R.centroid - P$
             \State $dc \gets$ \Call{RestrictVector}{dc, B}
-            \State \Return $\mathrm{abs}(dc) \leq (R.width) / 2$
+            \State \Return \Call{abs}{dc} $\leq (R.width) / 2$
         \EndFunction
      \end{algorithmic}
 \end{algorithm}
@@ -284,10 +285,30 @@ algorithms in 1 dimension.
         \Function{IsAABBIntersectsAABB}{$R1, R2, B$}
             \State $dc \gets R.centroid - R.centroid$
             \State $dc \gets$ \Call{RestrictVector}{dc, B}
-            \State \Return $\mathrm{abs}(dc) \leq (R1.width + R2.width) / 2$
+            \State \Return \Call{abs}{dc} $\leq (R1.width + R2.width) / 2$
         \EndFunction
      \end{algorithmic}
 \end{algorithm}
+
+\begin{figure}[hbt]
+    \includegraphics[width=8.4cm, bb=1 9 196 125]{fig2.eps}
+    \caption{
+    Visual description of geometrical relationships.
+    (\textbf{A})
+    Intersection detection of rectangles by widths and centroids. If sum of half
+    width is less than the distance between centroids, the rectangles intersect.
+    (\textbf{B})
+    Inclusion detection of rectangles. If sum of distance between centroids and
+    half width of the rectangle that might be included is less than the half
+    width of the rectangle that might includes the other, the rectangles have
+    including-included relationship.
+    (\textbf{C})
+    For point, intersection and inclusion means the same thing. If the distance
+    between the centroid of the rectangle and the point is less than the half
+    width of the centroid, the point intersects to the rectangle.
+    }
+    \label{fig2}
+\end{figure}
 
 \section*{Results}
 
@@ -309,10 +330,10 @@ tempor ex nec tincidunt. In ullamcorper vehicula lobortis.
 \section*{Conclusion}
 
 In this paper, the novel method for applying PBCs to Guttman's R-Tree is
-introduced. Proposed method is capable of containing not only sizeless points but also
-objects with finite size. The method can remove the necessity of storing
-extensional objects or replicating queries. Moreover, it reduces the size of
-each node in the natural way on PBCs.
+introduced. Proposed method is capable of containing not only sizeless points
+but also objects with finite size. The method can remove the necessity of
+storing extensional objects or replicating queries. Moreover, it reduces the
+size of each node in the natural way on PBCs.
 
 On the other hand, the method introduces tiny but additional costs into each
 procedures for maintaining R-Tree and checking geometrical conditions because it
