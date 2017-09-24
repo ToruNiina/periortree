@@ -26,7 +26,7 @@ struct scalar_type_of<boost::array<T, N> >{typedef T type;};
 template<typename T>
 struct zero_vector_impl
 {
-    static BOOST_FORCEINLINE invoke() BOOST_NOEXCEPT_OR_NOTHROW
+    static BOOST_FORCEINLINE T invoke() BOOST_NOEXCEPT_OR_NOTHROW
     {
         T retval;
         for(std::size_t i=0; i<dimension<T>::value; ++i)
@@ -39,7 +39,7 @@ struct zero_vector_impl
 template<typename T, std::size_t N>
 struct zero_vector_impl<boost::array<T, N> >
 {
-    static BOOST_FORCEINLINE invoke() BOOST_NOEXCEPT_OR_NOTHROW
+    static BOOST_FORCEINLINE boost::array<T, N> invoke() BOOST_NOEXCEPT_OR_NOTHROW
     {
         boost::array<T, N> retval; retval.fill(0);
         return retval;
