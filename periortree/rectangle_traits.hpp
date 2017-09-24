@@ -23,7 +23,7 @@ struct scalar_type_of<rectangle<pointT> >
 
 template<typename T>
 struct dimension<rectangle<T> >
-: boost::integral_constants<std::size_t, dimension<T>::vlaue>{};
+: boost::integral_constant<std::size_t, dimension<T>::value>{};
 
 
 } // traits

@@ -22,16 +22,16 @@ struct cubic_periodic_boundary
     typedef pointT point_type;
     BOOST_STATIC_ASSERT(traits::is_point<point_type>::value);
 
-    using ops::operator-;
-    using ops::operator/;
+//     using ::perior::ops::operator-;
+//     using ::perior::ops::operator/;
 
     cubic_periodic_boundary(const point_type& l, const point_type& u)
-        : lower_(l), upper_(u), width_(u - l), half_width((u - l) / 2)
+        : lower_(l), upper_(u), width_(u - l), half_width_((u - l) / 2)
     {}
 
     explicit cubic_periodic_boundary(const point_type& u)
         : lower_(traits::zero_vector<point_type>()), upper_(u),
-          width_(u), half_width(u / 2)
+          width_(u), half_width_(u / 2)
     {}
     ~cubic_periodic_boundary(){}
 
@@ -103,8 +103,8 @@ restrict_direction(pointT d, const cubic_periodic_boundary<pointT>& u)
 {
     for(std::size_t i=0; i<traits::dimension<pointT>::value; ++i)
     {
-             if(p[i] <  -(u.half_width()[i])){p[i] += u.width()[i];}
-        else if(p[i] >=   u.half_width()[i]) {p[i] -= u.width()[i];}
+             if(d[i] <  -(u.half_width()[i])){d[i] += u.width()[i];}
+        else if(d[i] >=   u.half_width()[i]) {d[i] -= u.width()[i];}
     }
     return d;
 }

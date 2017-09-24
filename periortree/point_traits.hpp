@@ -14,9 +14,9 @@ template<typename T, std::size_t N>
 struct is_point<boost::array<T, N> > : boost::true_type{};
 
 template<typename T>
-struct dimension : boost::integral_constants<std::size_t, 0> {};
+struct dimension : boost::integral_constant<std::size_t, 0> {};
 template<typename T, std::size_t N>
-struct dimension<boost::array<T, N> >: boost::integral_constants<std::size_t, N>{};
+struct dimension<boost::array<T, N> >: boost::integral_constant<std::size_t, N>{};
 
 template<typename T>
 struct scalar_type_of{};

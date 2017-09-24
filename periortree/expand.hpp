@@ -93,7 +93,7 @@ expand(const rectangle<pointT>& rct, const pointT& p,
     const pointT dc(restrict_direction(p - rct.centroid, b));
     const pointT lower = rct.centroid - rct.width;
     const pointT upper = rct.centroid + rct.width;
-    const pointT p_ = lhs.centroid + dc;
+    const pointT p_ = rct.centroid + dc;
 
     pointT center, width;
     for(std::size_t i=0; i<traits::dimension<pointT>::value; ++i)
