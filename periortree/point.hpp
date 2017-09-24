@@ -28,7 +28,16 @@ struct point
     template<typename ...Ts,
         typename boost::enable_if_c<sizeof...(Ts) == dim, std::nullptr_t
             >::type = nullptr>
-    point(Ts&& ... xs) noexcept : v_{{std::forward<scalar_type>(xs)...}}{}
+    point(Ts&& ... xs) noexcept : values_{{std::forward<scalar_type>(xs)...}}{}
+
+    point(std::initializer_list<scalar_type> il)
+    {
+        if(il.size() != N)
+        {
+            throw std::invalid_argument("initializer-list has invalid size");
+        }
+        std::copy(il.begin(), il.end(), this->values_.begin());
+    }
 #endif
 
     point(const point& rhs): values_(rhs.values_){}
