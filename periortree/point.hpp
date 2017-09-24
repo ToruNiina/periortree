@@ -26,7 +26,7 @@ struct point
 
 #if __cplusplus >= 201103L
     template<typename ...Ts,
-        typename boost::enable_if_c<sizeof...(Ts) == dim, std::nullptr_t
+        typename boost::enable_if_c<sizeof...(Ts) == dimension, std::nullptr_t
             >::type = nullptr>
     point(Ts&& ... xs) noexcept : values_{{std::forward<scalar_type>(xs)...}}{}
 
@@ -91,13 +91,13 @@ namespace traits
 template<typename T, std::size_t N>
 struct is_point<point<T, N> > : boost::true_type {};
 template<typename T, std::size_t N>
-struct dimension<point<T, N> > : boost::integral_constants<std::size_t, N>{};
+struct dimension<point<T, N> > : boost::integral_constant<std::size_t, N>{};
 template<typename T, std::size_t N>
 struct scalar_type_of<point<T, N> >{typedef T type;};
 template<typename T, std::size_t N>
 struct zero_vector_impl<point<T, N> >
 {
-    static BOOST_FORCEINLINE invoke() BOOST_NOEXCEPT_OR_NOTHROW
+    static BOOST_FORCEINLINE T invoke() BOOST_NOEXCEPT_OR_NOTHROW
     {
         return point<T, N>();
     }
