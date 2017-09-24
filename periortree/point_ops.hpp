@@ -96,7 +96,7 @@ operator/(const T& lhs, const typename traits::scalar_type_of<T>::type& rhs)
     T retval;
     for(std::size_t i=0; i<traits::dimension<T>::value; ++i)
     {
-        retval[i] = lhs[i] / rhs[i];
+        retval[i] = lhs[i] / rhs;
     }
     return retval;
 }
@@ -107,7 +107,7 @@ operator/=(T& lhs, const typename traits::scalar_type_of<T>::type& rhs)
 {
     for(std::size_t i=0; i<traits::dimension<T>::value; ++i)
     {
-        lhs[i] /= rhs[i];
+        lhs[i] /= rhs;
     }
     return lhs;
 }
