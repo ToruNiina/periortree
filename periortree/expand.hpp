@@ -8,7 +8,7 @@ namespace perior
 {
 
 template<typename pointT>
-inline typename boost::enable_if<traits::is_point<pointT>::value,
+inline typename boost::enable_if<traits::is_point<pointT>,
        rectangle<pointT> >::type
 expand(const rectangle<pointT>& lhs, const rectangle<pointT>& rhs,
        const unlimited_boundary<pointT>& b)
@@ -34,7 +34,7 @@ expand(const rectangle<pointT>& lhs, const rectangle<pointT>& rhs,
 
 
 template<typename pointT>
-inline typename boost::enable_if<traits::is_point<pointT>::value,
+inline typename boost::enable_if<traits::is_point<pointT>,
        rectangle<pointT> >::type
 expand(const rectangle<pointT>& lhs, const rectangle<pointT>& rhs,
        const cubic_periodic_boundary<pointT>& b)
@@ -60,7 +60,7 @@ expand(const rectangle<pointT>& lhs, const rectangle<pointT>& rhs,
 }
 
 template<typename pointT>
-inline typename boost::enable_if<traits::is_point<pointT>::value,
+inline typename boost::enable_if<traits::is_point<pointT>,
        rectangle<pointT> >::type
 expand(const rectangle<pointT>& rct, const pointT& p,
        const unlimited_boundary<pointT>& b)
@@ -82,7 +82,7 @@ expand(const rectangle<pointT>& rct, const pointT& p,
 }
 
 template<typename pointT>
-inline typename boost::enable_if<traits::is_point<pointT>::value,
+inline typename boost::enable_if<traits::is_point<pointT>,
        rectangle<pointT> >::type
 expand(const rectangle<pointT>& rct, const pointT& p,
        const cubic_periodic_boundary<pointT>& b)

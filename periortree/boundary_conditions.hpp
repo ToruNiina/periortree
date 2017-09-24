@@ -65,7 +65,7 @@ struct cubic_periodic_boundary
 
 template<typename pointT>
 BOOST_FORCEINLINE
-typename boost::enable_if<traits::is_point<pointT>::value, pointT>::type
+typename boost::enable_if<traits::is_point<pointT>, pointT>::type
 restrict_position(const pointT& p, const unlimited_boundary<pointT>& u)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
@@ -74,7 +74,7 @@ restrict_position(const pointT& p, const unlimited_boundary<pointT>& u)
 
 template<typename pointT>
 BOOST_FORCEINLINE
-typename boost::enable_if<traits::is_point<pointT>::value, pointT>::type
+typename boost::enable_if<traits::is_point<pointT>, pointT>::type
 restrict_direction(const pointT& d, const unlimited_boundary<pointT>& u)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
@@ -83,8 +83,8 @@ restrict_direction(const pointT& d, const unlimited_boundary<pointT>& u)
 
 template<typename pointT>
 BOOST_FORCEINLINE
-typename boost::enable_if<traits::is_point<pointT>::value, pointT>::type
-restrict_position(pointT p, const unlimited_boundary<pointT>& u)
+typename boost::enable_if<traits::is_point<pointT>, pointT>::type
+restrict_position(pointT p, const cubic_periodic_boundary<pointT>& u)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
     for(std::size_t i=0; i<traits::dimension<pointT>::value; ++i)
@@ -97,8 +97,8 @@ restrict_position(pointT p, const unlimited_boundary<pointT>& u)
 
 template<typename pointT>
 BOOST_FORCEINLINE
-typename boost::enable_if<traits::is_point<pointT>::value, pointT>::type
-restrict_direction(pointT d, const unlimited_boundary<pointT>& u)
+typename boost::enable_if<traits::is_point<pointT>, pointT>::type
+restrict_direction(pointT d, const cubic_periodic_boundary<pointT>& u)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
     for(std::size_t i=0; i<traits::dimension<pointT>::value; ++i)

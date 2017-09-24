@@ -8,7 +8,7 @@ namespace perior
 {
 
 template<typename pointT, template<typename> class boundaryT>
-inline typename boost::enable_if<traits::is_point<pointT>::value, bool>::type
+inline typename boost::enable_if<traits::is_point<pointT>, bool>::type
 within(const rectangle<pointT>& inner, const rectangle<pointT>& outer,
        const boundaryT<pointT>& b)
     BOOST_NOEXCEPT_OR_NOTHROW
@@ -25,7 +25,7 @@ within(const rectangle<pointT>& inner, const rectangle<pointT>& outer,
 }
 
 template<typename pointT, template<typename> class boundaryT>
-inline typename boost::enable_if<traits::is_point<pointT>::value, bool>::type
+inline typename boost::enable_if<traits::is_point<pointT>, bool>::type
 within(const pointT& p, const rectangle<pointT>& r, const boundaryT<pointT>& b)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
