@@ -5,7 +5,7 @@
 #include <periortree/expand.hpp>
 #include <periortree/within.hpp>
 #include <periortree/area.hpp>
-#include <periortree/dump.hpp>
+// #include <periortree/dump.hpp>
 #include <periortree/containers.hpp>
 
 #include <boost/optional.hpp>

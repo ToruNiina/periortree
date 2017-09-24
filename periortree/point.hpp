@@ -3,6 +3,11 @@
 #include <periortree/point_traits.hpp>
 #include <periortree/point_ops.hpp>
 
+#if __cplusplus >= 201103L
+#include <initializer_list>
+#include <algorithm>
+#endif
+
 namespace perior
 {
 
