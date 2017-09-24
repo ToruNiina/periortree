@@ -9,7 +9,7 @@ namespace ops
 {
 
 template<typename T>
-BOOST_FORCEINLINE typename boost::enable_if<is_point<T>, T>::type
+BOOST_FORCEINLINE typename boost::enable_if<traits::is_point<T>, T>::type
 operator+(const T& lhs, const T& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     T retval;
@@ -20,7 +20,7 @@ operator+(const T& lhs, const T& rhs) BOOST_NOEXCEPT_OR_NOTHROW
     return retval;
 }
 template<typename T>
-BOOST_FORCEINLINE typename boost::enable_if<is_point<T>, T>::type&
+BOOST_FORCEINLINE typename boost::enable_if<traits::is_point<T>, T>::type&
 operator+=(T& lhs, const T& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     for(std::size_t i=0; i<traits::dimension<T>::value; ++i)
@@ -31,7 +31,7 @@ operator+=(T& lhs, const T& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 }
 
 template<typename T>
-BOOST_FORCEINLINE typename boost::enable_if<is_point<T>, T>::type
+BOOST_FORCEINLINE typename boost::enable_if<traits::is_point<T>, T>::type
 operator-(const T& lhs, const T& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     T retval;
@@ -42,7 +42,7 @@ operator-(const T& lhs, const T& rhs) BOOST_NOEXCEPT_OR_NOTHROW
     return retval;
 }
 template<typename T>
-BOOST_FORCEINLINE typename boost::enable_if<is_point<T>, T>::type&
+BOOST_FORCEINLINE typename boost::enable_if<traits::is_point<T>, T>::type&
 operator-=(T& lhs, const T& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     for(std::size_t i=0; i<traits::dimension<T>::value; ++i)
@@ -53,7 +53,7 @@ operator-=(T& lhs, const T& rhs) BOOST_NOEXCEPT_OR_NOTHROW
 }
 
 template<typename T>
-BOOST_FORCEINLINE typename boost::enable_if<is_point<T>, T>::type
+BOOST_FORCEINLINE typename boost::enable_if<traits::is_point<T>, T>::type
 operator*(const T& lhs, const typename traits::scalar_type_of<T>::type& rhs)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
@@ -65,7 +65,7 @@ operator*(const T& lhs, const typename traits::scalar_type_of<T>::type& rhs)
     return retval;
 }
 template<typename T>
-BOOST_FORCEINLINE typename boost::enable_if<is_point<T>, T>::type
+BOOST_FORCEINLINE typename boost::enable_if<traits::is_point<T>, T>::type
 operator*(const typename traits::scalar_type_of<T>::type& lhs, const T& rhs)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
@@ -77,7 +77,7 @@ operator*(const typename traits::scalar_type_of<T>::type& lhs, const T& rhs)
     return retval;
 }
 template<typename T>
-BOOST_FORCEINLINE typename boost::enable_if<is_point<T>, T>::type&
+BOOST_FORCEINLINE typename boost::enable_if<traits::is_point<T>, T>::type&
 operator*=(T& lhs, const typename traits::scalar_type_of<T>::type& rhs)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
@@ -89,8 +89,8 @@ operator*=(T& lhs, const typename traits::scalar_type_of<T>::type& rhs)
 }
 
 template<typename T>
-BOOST_FORCEINLINE typename boost::enable_if<is_point<T>, T>::type
-operator/(const T& lhs, const traits::scalar_type_of<T>::type& rhs)
+BOOST_FORCEINLINE typename boost::enable_if<traits::is_point<T>, T>::type
+operator/(const T& lhs, const typename traits::scalar_type_of<T>::type& rhs)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
     T retval;
@@ -101,7 +101,7 @@ operator/(const T& lhs, const traits::scalar_type_of<T>::type& rhs)
     return retval;
 }
 template<typename T>
-BOOST_FORCEINLINE typename boost::enable_if<is_point<T>, T>::type&
+BOOST_FORCEINLINE typename boost::enable_if<traits::is_point<T>, T>::type&
 operator/=(T& lhs, const typename traits::scalar_type_of<T>::type& rhs)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
@@ -114,10 +114,11 @@ operator/=(T& lhs, const typename traits::scalar_type_of<T>::type& rhs)
 
 template<typename T>
 BOOST_FORCEINLINE
-typename boost::enable_if<is_point<T>, typename scalar_type_of<T>::type>::type
+typename boost::enable_if<traits::is_point<T>,
+         typename traits::scalar_type_of<T>::type>::type
 length_sq(const T& lhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
-    typename scalar_type_of<T>::type retval(0);
+    typename traits::scalar_type_of<T>::type retval(0);
     for(std::size_t i=0; i<traits::dimension<T>::value; ++i)
     {
         retval += lhs[i] * lhs[i];
@@ -126,14 +127,15 @@ length_sq(const T& lhs) BOOST_NOEXCEPT_OR_NOTHROW
 }
 template<typename T>
 BOOST_FORCEINLINE
-typename boost::enable_if<is_point<T>, typename scalar_type_of<T>::type>::type
+typename boost::enable_if<traits::is_point<T>,
+         typename traits::scalar_type_of<T>::type>::type
 length(const T& lhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     return std::sqrt(length_sq(lhs));
 }
 
 template<typename T>
-BOOST_FORCEINLINE typename boost::enable_if<is_point<T>, T>::type
+BOOST_FORCEINLINE typename boost::enable_if<traits::is_point<T>, T>::type
 abs(const T& lhs) BOOST_NOEXCEPT_OR_NOTHROW
 {
     T retval;
