@@ -14,7 +14,7 @@ expand(const rectangle<pointT>& lhs, const rectangle<pointT>& rhs,
        const unlimited_boundary<pointT>& b)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
-    typedef traits::scalar_type_of<pointT>::type scalar_type;
+    typedef typename traits::scalar_type_of<pointT>::type scalar_type;
 
     const pointT l1 = lhs.centroid - lhs.width;
     const pointT u1 = lhs.centroid + lhs.width;
@@ -40,7 +40,7 @@ expand(const rectangle<pointT>& lhs, const rectangle<pointT>& rhs,
        const cubic_periodic_boundary<pointT>& b)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
-    typedef traits::scalar_type_of<pointT>::type scalar_type;
+    typedef typename traits::scalar_type_of<pointT>::type scalar_type;
 
     const pointT dc(restrict_direction(rhs.centroid - lhs.centroid, b));
     const pointT l1 = lhs.centroid - lhs.width;
@@ -66,7 +66,7 @@ expand(const rectangle<pointT>& rct, const pointT& p,
        const unlimited_boundary<pointT>& b)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
-    typedef traits::scalar_type_of<pointT>::type scalar_type;
+    typedef typename traits::scalar_type_of<pointT>::type scalar_type;
     const pointT lower = rct.centroid - rct.width;
     const pointT upper = rct.centroid + rct.width;
 
@@ -88,7 +88,7 @@ expand(const rectangle<pointT>& rct, const pointT& p,
        const cubic_periodic_boundary<pointT>& b)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
-    typedef traits::scalar_type_of<pointT>::type scalar_type;
+    typedef typename traits::scalar_type_of<pointT>::type scalar_type;
 
     const pointT dc(restrict_direction(p - rct.centroid, b));
     const pointT lower = rct.centroid - rct.width;
