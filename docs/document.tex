@@ -85,26 +85,26 @@ variants have been proposed and are applied for many problems in a broad range
 of fields.
 
 In order to use it with periodic boundary conditions (PBCs), currently,
-two methods are proposed (figure\ref{fig1})\cite{CoSTR-R-tree2016}.
-The method visually described in figure \ref{fig1}A copies all the objects in
+two methods are proposed (figure\ref{fig-method-rtree-pbc})\cite{CoSTR-R-tree2016}.
+The method visually described in figure \ref{fig-method-rtree-pbc}A copies all the objects in
 the simulation system along each periodic boundaries.
 Although it can search objects associated with the adjacent periodic images in
 the same way as normal R-Tree, it consumes memory $3^D$ fold a lot (here $D$
 reprecents a number of dimension).
-Figure \ref{fig1}B showes another method that contains only one image,
+Figure \ref{fig-method-rtree-pbc}B showes another method that contains only one image,
 copying query AABB in the same manner as copying whole system if the query goes
 outside of the boundary.
 Although it works completely fine with sizeless particles, it has a problem to
 contain finite-sized objects. It might overlook objects if query is not copied
 when the query is inside of the boundary and objects extends beyond the unit
-cell (figure\ref{fig1}C).
+cell (figure\ref{fig-method-rtree-pbc}C).
 
 Here I propose the novel method to apply PBCs to R-Tree. The main idea is
 applying the PBCs to each operations for AABBs that are performed in each steps
 to maintain an R-Tree. Allowing the AABBs of each nodes to extend in a periodic
 manner, the R-Tree become capable of containing objects in the most natural way
 on PBCs to overcome the limitation of containing finite sized object
-(figure\ref{fig1}CD). With this method, it is not needed to copy objects
+(figure\ref{fig-method-rtree-pbc}CD). With this method, it is not needed to copy objects
 or queries at all. Moreover, using the information about the boundary condition,
 it is expected that the size of each AABBs associated with each nodes decreases
 relative to the other methods, suggesting that the spatial search become more
@@ -126,7 +126,7 @@ efficient.
     This is the method proposed in this paper. Forming rectangles according to
     the periodicity, R-Tree can organize objects on periodic boundary
     conditions.}
-    \label{fig1}
+    \label{fig-method-rtree-pbc}
 \end{figure}
 
 \section*{Methods}
@@ -166,7 +166,56 @@ width vector.
 \end{equation}
 
 Of course, all the representations have identical information, one can easily
-convert a certain representation to another.
+convert a certain representation to another. By algorithm\ref{centroid_aabb} and
+\ref{width_aabb}, one can easily convert the upper-lower representation to
+centroid-width representation.
+
+\begin{figure}[hbt]
+    \includegraphics[width=8.4cm, bb=3 2 233 83]{fig3.eps}
+    \caption{
+    (\textbf{A})
+    Representation of rectangle as a pair of upper and lower coordinates.
+    (\textbf{B})
+    Representation of rectangle as a pair of a centroid and width vector.
+    }
+    \label{fig-rectangle-rep}
+\end{figure}
+
+\begin{algorithm}
+    \caption{calculate the centroid of an AABB on PBCs.}
+    \label{centroid_aabb}
+    \begin{algorithmic}
+        \State $U \gets$ upper limit of bounding box restricted in the unit cell of PBCs
+        \State $L \gets$ lower limit of bounding box restricted in the unit cell of PBCs
+        \State $B \gets$ the unit cell of a boundary
+        \Function{CentroidAABB}{$U, L, B$}
+            \If{$U < L$}
+                \State $C \gets (U + B.width + L) / 2$
+            \Else
+                \State $C \gets (U + L) / 2$
+            \EndIf
+            \State \Return $C$
+        \EndFunction
+     \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+    \caption{calculate the width of an AABB on PBCs.}
+    \label{width_aabb}
+    \begin{algorithmic}
+        \State $U \gets$ upper limit of bounding box restricted in the unit cell of PBCs
+        \State $L \gets$ lower limit of bounding box restricted in the unit cell of PBCs
+        \State $B \gets$ the unit cell of a boundary
+        \Function{WidthAABB}{$U, L, B$}
+            \If{$U < L$}
+                \State $W \gets U + B.width - L$
+            \Else
+                \State $W \gets U - L$
+            \EndIf
+            \State \Return $W$
+        \EndFunction
+     \end{algorithmic}
+\end{algorithm}
 
 \paragraph{Expanding AABBs on PBCs.}
 Expanding an AABB to make it a minimal bounding box of its contents is one of
@@ -245,7 +294,8 @@ implemented.
 To find an object in an R-Tree, it is needed to check an object is inside of
 an rectangle. Whether an object includes or intersects the other object can be
 determined by using the minimum distance between centroids of the objects.
-Figure ~\ref{fig2} graphically shows the idea of each algorithms in 1 dimension.
+Figure ~\ref{fig-geometric-relationship} graphically shows the idea of each
+algorithms in 1 dimension.
 
 \begin{algorithm}
     \caption{Check whether an AABB is inside of an AABB}
@@ -307,7 +357,7 @@ Figure ~\ref{fig2} graphically shows the idea of each algorithms in 1 dimension.
     between the centroid of the rectangle and the point is less than the half
     width of the centroid, the point intersects to the rectangle.
     }
-    \label{fig2}
+    \label{fig-geometric-relationship}
 \end{figure}
 
 \section*{Results}
