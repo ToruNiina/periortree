@@ -13,8 +13,8 @@ struct point_type_of{};
 template<typename pointT>
 struct point_type_of<rectangle<pointT> >{typedef pointT type;};
 
-template<typename T>
-struct scalar_type_of{};
+// template<typename T>
+// struct scalar_type_of{};
 template<typename pointT>
 struct scalar_type_of<rectangle<pointT> >
 {
