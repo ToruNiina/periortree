@@ -332,7 +332,7 @@ algorithms in 1 dimension.
         \State $R1 \gets$ rectangle
         \State $R2 \gets$ rectangle that might intersect to R1
         \State $B  \gets$ boundary
-        \Function{IsAABBIntersectsAABB}{$R1, R2, B$}
+        \Function{IntersectsAABB}{$R1, R2, B$}
             \State $dc \gets R.centroid - R.centroid$
             \State $dc \gets$ \Call{RestrictVector}{dc, B}
             \State \Return \Call{abs}{dc} $\leq (R1.width + R2.width) / 2$
