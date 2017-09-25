@@ -18,7 +18,7 @@
 namespace perior
 {
 
-template<typename T, typename Alloc>
+template<typename T, typename Alloc = std::allocator<T> >
 struct gen_vector
 {
 #ifdef PERIOR_TREE_HAS_BOOST_CONTAINER_VECTOR
@@ -28,7 +28,7 @@ struct gen_vector
 #endif
 };
 
-template<typename T, std::size_t N, typename Alloc>
+template<typename T, std::size_t N, typename Alloc = std::allocator<T> >
 struct gen_small_vector
 {
 #ifdef PERIOR_TREE_HAS_BOOST_SMALL_VECTOR
