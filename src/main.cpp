@@ -1,12 +1,14 @@
-#include <experimental/rtree.hpp>
+#include <periortree/rtree.hpp>
+#include <periortree/point.hpp>
+#include <periortree/boundary_conditions.hpp>
 #include <fstream>
 #include <random>
 
-typedef perior::point<double,2> point_t;
-typedef perior::aabb<double,2>  aabb_t;
-typedef perior::cubic_periodic_boundary<double, 2> boundary_t;
+typedef perior::point<double,2>    point_t;
+typedef perior::rectangle<point_t> aabb_t;
+typedef perior::cubic_periodic_boundary<point_t> boundary_t;
 typedef std::pair<aabb_t, std::size_t> value_t;
-typedef perior::rtree<value_t, perior::quadratic<2, 6>, boundary_t> rtree_t;
+typedef perior::rtree<value_t, perior::quadratic<6, 2>, boundary_t> rtree_t;
 
 void dump(const std::string& fname, const rtree_t& rtr, const boundary_t& bdry)
 {
@@ -26,7 +28,7 @@ void dump(const std::string& fname, const rtree_t& rtr, const boundary_t& bdry)
 
 int main()
 {
-    boundary_t bdry(point_t(0,0), point_t(1000, 1000));
+    boundary_t bdry(point_t{0,0}, point_t{1000, 1000});
     rtree_t tree(bdry);
 
     std::mt19937 mt_(123456789);
@@ -42,8 +44,8 @@ int main()
         const point_t l(xidx * 10, yidx * 10);
         const point_t u(l[0] + 10, l[1] + 10);
 
-        box.upper() = u;
-        box.lower() = l;
+        box.centroid = (u + l) / 2;
+        box.width    =  u - l;
         boxes.push_back(box);
 
         tree.insert(value_t(box, i));
@@ -70,8 +72,8 @@ int main()
         const point_t l(xidx * 10, yidx * 10);
         const point_t u(l[0] + 10, l[1] + 10);
 
-        box.upper() = u;
-        box.lower() = l;
+        box.centroid =(u + l) / 2;
+        box.width    = u - l;
         boxes.push_back(box);
 
         tree.insert(value_t(box, i));
