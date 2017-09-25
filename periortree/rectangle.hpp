@@ -14,6 +14,8 @@ struct rectangle
     const static std::size_t dimension = traits::dimension<point_type>::value;
     BOOST_STATIC_ASSERT(traits::is_point<point_type>::value);
 
+    rectangle(){}
+
     explicit rectangle(const point_type& w)
         : centroid(traits::zero_vector<point_type>()), width(w)
     {}
