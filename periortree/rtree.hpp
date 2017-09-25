@@ -1,11 +1,13 @@
 #ifndef PERIOR_TREE_RTREE_HPP
 #define PERIOR_TREE_RTREE_HPP
+#include <periortree/point_traits.hpp>
+#include <periortree/rectangle_traits.hpp>
 #include <periortree/indexable.hpp>
 #include <periortree/node.hpp>
 #include <periortree/expand.hpp>
 #include <periortree/within.hpp>
 #include <periortree/area.hpp>
-// #include <periortree/dump.hpp>
+#include <periortree/to_svg.hpp>
 #include <periortree/containers.hpp>
 
 #include <boost/optional.hpp>
@@ -50,6 +52,7 @@ class rtree
     typedef typename container_type::const_iterator const_iterator;
 
     typedef detail::rtree_node<point_type, min_entry, max_entry> node_type;
+    typedef typename node_type::aabb_type aabb_type;
 
     typedef typename allocator_type::template rebind<node_type>::other
             node_allocator_type;
@@ -90,7 +93,7 @@ class rtree
     {}
 
     std::size_t size() const BOOST_NOEXCEPT_OR_NOTHROW {return container_.size();}
-    bool empty()       const BOOST_NOEXCEPT_OR_NOTHROW {return container_.empty();}
+    bool empty()       const BOOST_NOEXCEPT_OR_NOTHROW {return this->root_ == nil;}
     void clear()
     {
         this->root_ = nil;
@@ -130,9 +133,10 @@ class rtree
         {
             return false;
         }
-        if(boost::optional<std::pair<std::size_t,
-            typename node_type::const_iterator> >
-                found = this->find_leaf(this->root_, v))
+        boost::optional<
+            std::pair<std::size_t, typename node_type::const_iterator>
+            > found = this->find_leaf(this->root_, v);
+        if(found)
         {
             const std::size_t node_idx  =   found->first;
             const std::size_t value_idx = *(found->second);
@@ -152,12 +156,11 @@ class rtree
         return query_impl(this->root_, q, out);
     }
 
-    template<typename charT, typename traits>
-    std::basic_ostream<charT, traits>&
-    dump(std::basic_ostream<charT, traits>& os) const
+    std::ostream& dump(std::ostream& os) const
     {
-        if(this->root_ == nil){return os;}
-        std::vector<std::string> colors;
+        if(this->empty()){return os;}
+
+        std::vector<std::string> colors; colors.reserve(3);
         colors.push_back("red");
         colors.push_back("green");
         colors.push_back("blue");
@@ -166,31 +169,31 @@ class rtree
 
   private:
 
-    template<typename charT, typename traits>
-    std::basic_ostream<charT, traits>&
-    dump_node(std::basic_ostream<charT, traits>& os,
+    std::ostream& dump_node(std::ostream& os,
               const std::size_t N, const std::size_t depth,
               const std::vector<std::string>& clrs) const
     {
-        const std::string& clr = clrs.at(depth%3);
-        to_svg(os, tree_.at(N).box, this->boundary_, clr, 5, "none");
+        const std::string& clr = clrs.at(depth % 3);
+        const node_type& node = tree_.at(N);
+        to_svg(os, node.box, this->boundary_, clr, 5, "none");
         os << '\n';
-        if(tree_.at(N).is_leaf)
+        if(node.is_leaf)
         {
-            for(auto i=tree_.at(N).entry.cbegin(), e=tree_.at(N).entry.cend();
-                    i!=e; ++i)
+            for(typename node_type::const_iterator
+                    i(node.entry.cbegin()), e(node.entry.cend()); i!=e; ++i)
             {
-                to_svg(os, indexable::invoke(container_.at(*i)), this->boundary_, "black", 1, "black");
+                to_svg(os, indexable_getter_(this->container_.at(*i)),
+                       this->boundary_, "black", 1, "black");
                 os << '\n';
             }
             return os;
         }
-        else
+        else // internal node
         {
-            for(auto i=tree_.at(N).entry.cbegin(), e=tree_.at(N).entry.cend();
-                    i!=e; ++i)
+            for(typename node_type::const_iterator
+                    i(node.entry.cbegin()), e(node.entry.cend()); i!=e; ++i)
             {
-                dump_node(os, *i, depth+1, clrs);
+                this->dump_node(os, *i, depth+1, clrs);
             }
             return os;
         }
@@ -212,9 +215,12 @@ class rtree
         }
         std::cerr << "now tree has root " << this->root_ << std::endl;
 
+        // choose a leaf to insert
+        // so if root is a leaf, return it
         std::size_t node_idx = this->root_;
         while(!(this->tree_.at(node_idx).is_leaf))
         {
+            // find minimum expansion
             scalar_type diff_area_min = std::numeric_limits<scalar_type>::max();
             scalar_type area_min      = std::numeric_limits<scalar_type>::max();
 
@@ -222,19 +228,20 @@ class rtree
             for(typename node_type::const_iterator
                     i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
             {
-                aabb_type box = tree_.at(*i).box;
-                const scalar_type area_initial = area(box, this->boundary_);
+                const scalar_type area_initial
+                    = area(this->tree_.at(*i).box, this->boundary_);
 
-                expand(box, entry, this->boundary_);
+                const scalar_type area_expanded
+                    = area(expand(this->tree_.at(*i).box, entry, this->boundary_),
+                           this->boundary_);
 
-                const scalar_type area_expanded = area(box, this->boundary_);
-                const scalar_type diff_area     = area_expanded - area_initial;
+                const scalar_type diff_area = area_expanded - area_initial;
                 if((diff_area <  diff_area_min) ||
                    (diff_area == diff_area_min  && area_expanded < area_min))
                 {
                     node_idx = *i;
                     diff_area_min = diff_area;
-                    area_min = area_expanded;
+                    area_min      = std::min(area_min, area_expanded);
                 }
             }
         }
@@ -247,8 +254,7 @@ class rtree
         {
             const node_type& node = tree_.at(node_idx);
             node_type& parent_ = tree_.at(node.parent);
-            expand(parent_.box, node.box, this->boundary_);
-
+            parent_.box = expand(parent_.box, node.box, this->boundary_);
             node_idx = node.parent;
         }
         return;
@@ -257,65 +263,62 @@ class rtree
     {
         if(tree_.at(N).parent == nil) // grow tree taller
         {
-            std::cerr << "node " << N << " has no parent." << std::endl;
+            std::cerr << "node " << N << " has no parent. grow tree taller" << std::endl;
             node_type new_root(false, nil);
             new_root.entry.push_back(N);
             new_root.entry.push_back(NN);
-            new_root.box = tree_.at(N).box;
-            expand(new_root.box, tree_.at(NN).box, this->boundary_);
+            new_root.box = expand(tree_.at(N).box, tree_.at(NN).box, this->boundary_);
             this->root_ = this->add_node(new_root);
-            std::cerr << "NR(" << this->root_ << ") = ";
-            to_svg(std::cerr, tree_.at(this->root_).box, this->boundary_);
+//             std::cerr << "NR(" << this->root_ << ") = ";
+//             to_svg(std::cerr, tree_.at(this->root_).box, this->boundary_);
 
             this->tree_.at(N).parent = this->root_;
             this->tree_.at(NN).parent = this->root_;
-            std::cerr << "\nN (" << N << ") = ";
-            to_svg(std::cerr, tree_.at(N).box, this->boundary_);
-            std::cerr << "\nNN(" << NN << ") = ";
-            to_svg(std::cerr, tree_.at(NN).box, this->boundary_);
-            std::cerr << "\nadjust_tree: grow tree taller. new root is " << this->root_ << std::endl;
+//             std::cerr << "\nN (" << N << ") = ";
+//             to_svg(std::cerr, tree_.at(N).box, this->boundary_);
+//             std::cerr << "\nNN(" << NN << ") = ";
+//             to_svg(std::cerr, tree_.at(NN).box, this->boundary_);
+//             std::cerr << "\nadjust_tree: grow tree taller. new root is " << this->root_ << std::endl;
             return;
         }
         else
         {
             const node_type& node    = tree_.at(N);
             const node_type& partner = tree_.at(NN);
-
             assert(node.parent == partner.parent);
+
             node_type& parent_ = tree_.at(node.parent);
-            expand(parent_.box, node.box, this->boundary_);
+            parent_.box = expand(parent_.box, node.box, this->boundary_); // for N
+
             std::cerr << "adjust_tree(N, NN): parent has " << parent_.entry.size() << "entry." << std::endl;
             if(parent_.has_enough_storage())
             {
                 std::cerr << "storage is enough." << std::endl;
-                expand(parent_.box, partner.box, this->boundary_);
+                parent_.box = expand(parent_.box, partner.box, this->boundary_); // for NN
                 parent_.entry.push_back(NN);
                 return this->adjust_tree(node.parent);
             }
             else
             {
-                std::cerr << "storage is not enough." << std::endl;
-
+                std::cerr << "storage is not enough. split this node." << std::endl;
                 const std::size_t PP = this->split_node(node.parent, NN);
-
-                std::cerr << "adjust_tree: split node " << node.parent
-                          << " and " << PP << std::endl;
-                std::cerr << "node (" << node.parent << ") = ";
-                to_svg(std::cerr, tree_.at(node.parent).box, this->boundary_);
-                std::cerr << "\npartner(" << PP << ") = ";
-                to_svg(std::cerr, tree_.at(PP).box, this->boundary_);
-                std::cerr << std::endl;
-
+//                 std::cerr << "adjust_tree: split node " << node.parent
+//                           << " and " << PP << std::endl;
+//                 std::cerr << "node (" << node.parent << ") = ";
+//                 to_svg(std::cerr, tree_.at(node.parent).box, this->boundary_);
+//                 std::cerr << "\npartner(" << PP << ") = ";
+//                 to_svg(std::cerr, tree_.at(PP).box, this->boundary_);
+//                 std::cerr << std::endl;
                 return this->adjust_tree(node.parent, PP);
             }
         }
     }
 
-    boost::optional<std::pair<std::size_t, typename node_type::const_iterator>>
+    boost::optional<std::pair<std::size_t, typename node_type::const_iterator> >
     find_leaf(std::size_t node_idx, const value_type& entry) const
     {
         const node_type& node = tree_.at(node_idx);
-        if(within(indexable::invoke(entry), node.box, this->boundary_) == false)
+        if(within(indexable_getter_(entry), node.box, this->boundary_) == false)
         {
             return boost::none;
         }
@@ -337,13 +340,15 @@ class rtree
             for(typename node_type::const_iterator
                     i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
             {
-                if(!within(indexable::invoke(entry), tree_.at(*i).box, this->boundary_))
+                if(!within(indexable_getter_(entry), tree_.at(*i).box, this->boundary_))
                 {
                     continue;
                 }
 
-                if(boost::optional<std::pair<std::size_t, typename node_type::const_iterator>
-                    > found = this->find_leaf(*i, entry))
+                boost::optional<
+                    std::pair<std::size_t, typename node_type::const_iterator>
+                    > found = this->find_leaf(*i, entry);
+                if(found)
                 {
                     return found;
                 }
@@ -372,7 +377,8 @@ class rtree
         std::cerr << "parent of node " << N << " is " << node.parent << std::endl;
 
         // copy index of objects
-        boost::container::small_vector<std::size_t, min_entry> eliminated_objs;
+        typedef typename gen_small_vector<std::size_t, min_entry>::type temporal_vec_type;
+        temporal_vec_type eliminated_objs;
         std::copy(node.entry.begin(), node.entry.end(),
                   std::back_inserter(eliminated_objs));
 
@@ -385,7 +391,8 @@ class rtree
         this->condense_box(this->tree_.at(node.parent));
 
         // re-insert entries eliminated from node N
-        for(auto i(eliminated_objs.begin()), e(eliminated_objs.end()); i!=e; ++i)
+        for(typename temporal_vec_type::const_iterator
+                i(eliminated_objs.begin()), e(eliminated_objs.end()); i!=e; ++i)
         {
             this->insert(this->container_.at(*i));
         }
@@ -421,7 +428,8 @@ class rtree
         std::cerr << "internal node has parent " << node.parent << std::endl;
 
         // collect index of nodes that are children of the node to be removed
-        boost::container::small_vector<std::size_t, min_entry> eliminated_nodes;
+        typedef typename gen_small_vector<std::size_t, min_entry>::type temporal_vec_type;
+        temporal_vec_type eliminated_nodes;
         std::copy(node.entry.begin(), node.entry.end(),
                   std::back_inserter(eliminated_nodes));
 
@@ -434,7 +442,8 @@ class rtree
         this->condense_box(this->tree_.at(node.parent));
 
         // re-insert nodes eliminated from node N
-        for(auto i(eliminated_nodes.begin()), e(eliminated_nodes.end()); i!=e; ++i)
+        for(typename temporal_vec_type::const_iterator
+                i(eliminated_nodes.begin()), e(eliminated_nodes.end()); i!=e; ++i)
         {
             this->re_insert(*i);
         }
@@ -442,8 +451,7 @@ class rtree
         return;
     }
 
-
-    // split nodes because of one entry
+    // TODO move it to quadratic struct
     node_type split_leaf(const std::size_t N,
                          const std::size_t vidx, const indexable_type& entry)
     {
@@ -452,22 +460,23 @@ class rtree
         node_type& node = tree_.at(N);
         node_type  partner(true, node.parent);
 
-        boost::container::static_vector<std::pair<std::size_t, indexable_type>,
-            max_entry+1> entries;
+        typedef typename gen_static_vector<std::pair<std::size_t, indexable_type>,
+                max_entry+1>::type temporal_entry_container;
+        temporal_entry_container entries;
         entries.push_back(std::make_pair(vidx, entry));
 
         for(typename node_type::const_iterator
                 i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
         {
             entries.push_back(std::make_pair(
-                        *i, indexable::invoke(container_.at(*i))));
+                        *i, indexable_getter_(container_.at(*i))));
         }
         node.entry.clear();
         partner.entry.clear(); // for make it sure
 
         /* assign first 2 entries to node and partner */
         {
-            const std::array<std::size_t, 2> seeds = this->pick_seeds(entries);
+            const boost::array<std::size_t, 2> seeds = this->pick_seeds(entries);
             std::cerr << "seeds = {" << entries.at(seeds[0]).first
                       << ", " << entries.at(seeds[1]).first << "}" << std::endl;
             std::cerr << "entries.size() = " << entries.size() << std::endl;
@@ -489,20 +498,22 @@ class rtree
             if(min_entry > node.entry.size() &&
                min_entry - node.entry.size() >= entries.size())
             {
-                for(auto i(entries.begin()), e(entries.end()); i != e; ++i)
+                for(typename temporal_entry_container::const_iterator
+                        i(entries.begin()), e(entries.end()); i != e; ++i)
                 {
                     node.entry.push_back(i->first);
-                    expand(node.box, i->second, this->boundary_);
+                    node.box = expand(node.box, i->second, this->boundary_);
                 }
                 return partner;
             }
             if(min_entry > partner.entry.size() &&
                min_entry - partner.entry.size() >= entries.size())
             {
-                for(auto i(entries.begin()), e(entries.end()); i != e; ++i)
+                for(typename temporal_entry_container::const_iterator
+                        i(entries.begin()), e(entries.end()); i != e; ++i)
                 {
                     partner.entry.push_back(i->first);
-                    expand(partner.box, i->second, this->boundary_);
+                    partner.box = expand(partner.box, i->second, this->boundary_);
                 }
                 return partner;
             }
@@ -514,14 +525,16 @@ class rtree
                 std::cerr << "next entry " << entries.at(next.first).first
                           << " is for node." << std::endl;
                 node.entry.push_back(entries.at(next.first).first);
-                expand(node.box, entries.at(next.first).second, this->boundary_);
+                node.box =
+                    expand(node.box, entries.at(next.first).second, this->boundary_);
             }
             else // next is for partner
             {
                 std::cerr << "next entry " << entries.at(next.first).first
                           << " is for partner." << std::endl;
                 partner.entry.push_back(entries.at(next.first).first);
-                expand(partner.box, entries.at(next.first).second, this->boundary_);
+                partner.box =
+                    expand(partner.box, entries.at(next.first).second, this->boundary_);
             }
             entries.erase(entries.begin() + next.first);
         }
@@ -530,12 +543,13 @@ class rtree
 
     // objT should be indexable_type or aabb_type
     template<typename objT>
-    std::array<std::size_t, 2> pick_seeds(const boost::container::static_vector<
-            std::pair<std::size_t, objT>, max_entry+1>& entries)
+    boost::array<std::size_t, 2>
+    pick_seeds(const typename gen_static_vector<
+                   std::pair<std::size_t, objT>, max_entry+1>::type& entries)
     {
         assert(entries.size() >= 2);
 
-        std::array<std::size_t, 2> retval;
+        boost::array<std::size_t, 2> retval;
 
         scalar_type max_d = 0;
         for(std::size_t i=0; i<entries.size()-1; ++i)
@@ -544,8 +558,7 @@ class rtree
             {
                 const aabb_type E1I = make_aabb(entries.at(i).second);
                 const aabb_type E2I = make_aabb(entries.at(j).second);
-                aabb_type J = E1I;
-                expand(J, E2I, this->boundary_);
+                const aabb_type J = expand(E1I, E2I, this->boundary_);
                 const scalar_type d =
                     area(J, boundary_) - area(E1I, boundary_) - area(E2I, boundary_);
                 if(max_d < std::abs(d))
@@ -574,8 +587,8 @@ class rtree
         scalar_type max_dd = -1;
         for(std::size_t i=0; i<entries.size(); ++i)
         {
-            aabb_type box1 = node; expand(box1, make_aabb(entries.at(i).second), this->boundary_);
-            aabb_type box2 = ptnr; expand(box2, make_aabb(entries.at(i).second), this->boundary_);
+            aabb_type box1 = expand(node, make_aabb(entries.at(i).second), this->boundary_);
+            aabb_type box2 = expand(ptnr, make_aabb(entries.at(i).second), this->boundary_);
             const scalar_type d1 = area(box1, this->boundary_) - area(node, this->boundary_);
             const scalar_type d2 = area(box2, this->boundary_) - area(ptnr, this->boundary_);
             const scalar_type dd = d1 - d2;
@@ -598,8 +611,9 @@ class rtree
 
         std::cerr << "split_node: node = " << P << ", partner = " << PP << std::endl;
 
-        boost::container::static_vector<std::pair<std::size_t, aabb_type>,
-            max_entry+1> entries;
+        typedef typename gen_static_vector<std::pair<std::size_t, aabb_type>,
+                max_entry+1>::type temporal_entry_container;
+        temporal_entry_container entries;
         entries.push_back(std::make_pair(NN, tree_.at(NN).box));
         std::cerr << "entry node " << NN << " = ";
         to_svg(std::cerr, tree_.at(NN).box, this->boundary_);
@@ -618,7 +632,7 @@ class rtree
         partner.entry.clear(); // for make it sure
 
         /* assign first 2 entries to node and partner */{
-            const std::array<std::size_t, 2> seeds = this->pick_seeds(entries);
+            const boost::array<std::size_t, 2> seeds = this->pick_seeds(entries);
             std::cerr << "seeds = " << entries.at(seeds[0]).first << " for node, "
                       << entries.at(seeds[1]).first << " for partner." << std::endl;
 
@@ -652,10 +666,11 @@ class rtree
                 std::cerr << "min_entry = " << min_entry
                           << ", node.entry.size() = " << node.entry.size()
                           << ", entries.size() = " << entries.size() << std::endl;
-                for(auto i(entries.begin()), e(entries.end()); i != e; ++i)
+                for(typename temporal_entry_container::const_iterator
+                        i(entries.begin()), e(entries.end()); i != e; ++i)
                 {
                     node.entry.push_back(i->first);
-                    expand(node.box, i->second, this->boundary_);
+                    node.box = expand(node.box, i->second, this->boundary_);
                 }
                 return PP;
             }
@@ -665,10 +680,11 @@ class rtree
                 std::cerr << "min_entry = " << min_entry
                           << ", partner.entry.size() = " << partner.entry.size()
                           << ", entries.size() = " << entries.size() << std::endl;
-                for(auto i(entries.begin()), e(entries.end()); i != e; ++i)
+                for(typename temporal_entry_container::const_iterator
+                        i(entries.begin()), e(entries.end()); i != e; ++i)
                 {
                     partner.entry.push_back(i->first);
-                    expand(partner.box, i->second, this->boundary_);
+                    partner.box = expand(partner.box, i->second, this->boundary_);
                 }
                 return PP;
             }
@@ -681,7 +697,8 @@ class rtree
                           << " is for node." << std::endl;
                 node.entry.push_back(entries.at(next.first).first);
                 tree_.at(entries.at(next.first).first).parent = P;
-                expand(node.box, entries.at(next.first).second, this->boundary_);
+                node.box =
+                    expand(node.box, entries.at(next.first).second, this->boundary_);
 
                 std::cerr << "node expanded;" << std::endl;
                 std::cerr << "node(" << P << ")    = ";
@@ -697,7 +714,8 @@ class rtree
                           << " is for partner." << std::endl;
                 partner.entry.push_back(entries.at(next.first).first);
                 tree_.at(entries.at(next.first).first).parent = PP;
-                expand(partner.box, entries.at(next.first).second, this->boundary_);
+                partner.box =
+                    expand(partner.box, entries.at(next.first).second, this->boundary_);
 
                 std::cerr << "partner expanded;" << std::endl;
                 std::cerr << "node(" << P << ")    = ";
@@ -731,7 +749,7 @@ class rtree
                 i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
             {
                 value_type const& val = container_.at(*i);
-                if(q.match(indexable::invoke(val)) && q.match(val))
+                if(q.match(indexable_getter_(val)) && q.match(val))
                 {
                     *out = val;
                     ++out;
@@ -795,7 +813,8 @@ class rtree
         return;
     }
 
-    std::size_t choose_node_with_level(const aabb_type& entry, const std::size_t lvl)
+    std::size_t
+    choose_node_with_level(const aabb_type& entry, const std::size_t lvl)
     {
         std::size_t node_idx = this->root_;
         if(level_of(this->root_) < lvl)
@@ -812,10 +831,8 @@ class rtree
             for(typename node_type::const_iterator
                     i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
             {
-                aabb_type box = tree_.at(*i).box;
-                const scalar_type area_initial = area(box, this->boundary_);
-
-                expand(box, entry, this->boundary_);
+                const scalar_type area_initial = area(tree_.at(*i).box, this->boundary_);
+                const aabb_type box = expand(tree_.at(*i).box, entry, this->boundary_);
 
                 const scalar_type area_expanded = area(box, this->boundary_);
                 const scalar_type diff_area     = area_expanded - area_initial;
@@ -824,7 +841,7 @@ class rtree
                 {
                     node_idx = *i;
                     diff_area_min = diff_area;
-                    area_min = area_expanded;
+                    area_min = std::min(area_expanded, area_min);
                 }
             }
         }
@@ -837,36 +854,38 @@ class rtree
         if(node.is_leaf)
         {
             std::cerr << "leaf node has values {";
-            for(auto i: node.entry)
+            for(typename node_type::const_iterator
+                    i(node.entry.begin()),e(node.entry.end()); i!=e; ++i)
             {
-                std::cerr << i << ", ";
+                std::cerr << *i << ", ";
             }
             std::cerr << '}' << std::endl;
 
-            auto i = node.entry.cbegin();
-            node.box = indexable::invoke(this->container_.at(*i));
+            typename node_type::const_iterator i(node.entry.begin());
+            node.box = indexable_getter_(this->container_.at(*i));
             ++i;
-            for(auto e(node.entry.cend()); i != e; ++i)
+            for(typename node_type::const_iterator e(node.entry.end()); i != e; ++i)
             {
-                expand(node.box, indexable::invoke(this->container_.at(*i)),
-                       this->boundary_);
+                node.box = expand(node.box,
+                        indexable_getter_(this->container_.at(*i)), this->boundary_);
             }
         }
         else
         {
             std::cerr << "internal node has values {";
-            for(auto i: node.entry)
+            for(typename node_type::const_iterator
+                    i(node.entry.begin()),e(node.entry.end()); i!=e; ++i)
             {
-                std::cerr << i << ", ";
+                std::cerr << *i << ", ";
             }
             std::cerr << '}' << std::endl;
 
-            auto i = node.entry.cbegin();
+            typename node_type::const_iterator i = node.entry.begin();
             node.box = this->tree_.at(*i).box;
             ++i;
-            for(auto e(node.entry.cend()); i != e; ++i)
+            for(typename node_type::const_iterator e(node.entry.end()); i != e; ++i)
             {
-                expand(node.box, this->tree_.at(*i).box, this->boundary_);
+                node.box = expand(node.box, this->tree_.at(*i).box, this->boundary_);
             }
         }
         return;
