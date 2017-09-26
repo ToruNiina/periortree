@@ -113,6 +113,24 @@ operator/=(T& lhs, const typename traits::scalar_type_of<T>::type& rhs)
 }
 
 template<typename T>
+BOOST_FORCEINLINE typename boost::enable_if<traits::is_point<T>, bool>::type
+operator==(const T& lhs, const T& rhs) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    for(std::size_t i=0; i<traits::dimension<T>::value; ++i)
+    {
+        if(lhs[i] != rhs[i]) {return false;}
+    }
+    return true;
+}
+template<typename T>
+BOOST_FORCEINLINE typename boost::enable_if<traits::is_point<T>, bool>::type
+operator!=(const T& lhs, const T& rhs) BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return !(lhs == rhs);
+}
+
+
+template<typename T>
 BOOST_FORCEINLINE
 typename boost::enable_if<traits::is_point<T>,
          typename traits::scalar_type_of<T>::type>::type

@@ -82,6 +82,8 @@ using ops::operator*;
 using ops::operator*=;
 using ops::operator/;
 using ops::operator/=;
+using ops::operator==;
+using ops::operator!=;
 using ops::length_sq;
 using ops::length;
 using ops::abs;
