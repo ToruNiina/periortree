@@ -37,5 +37,27 @@ struct rectangle
     point_type centroid, width;
 };
 
+template<typename pointT>
+inline bool operator==(const rectangle<pointT>& lhs, const rectangle<pointT>& rhs)
+    BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return lhs.centroid == rhs.centroid && lhs.width == rhs.width;
+}
+
+template<typename pointT>
+inline bool operator!=(const rectangle<pointT>& lhs, const rectangle<pointT>& rhs)
+    BOOST_NOEXCEPT_OR_NOTHROW
+{
+    return lhs.centroid != rhs.centroid || lhs.width != rhs.width;
+}
+
+template<typename pointT, typename charT, typename traits>
+std::basic_ostream<charT, traits>&
+operator<<(std::basic_ostream<charT, traits>& os, const rectangle<pointT>& rect)
+{
+    os << "rectangle {c = " << rect.centroid << ", w = " << rect.width << '}';
+    return os;
+}
+
 } // perior
 #endif// PERIOR_TREE_RECTANGLE

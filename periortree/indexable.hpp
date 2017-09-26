@@ -25,7 +25,7 @@ BOOST_FORCEINLINE
 typename boost::enable_if<traits::is_point<pointT>, rectangle<pointT> >::type
 make_aabb(pointT const& p) BOOST_NOEXCEPT_OR_NOTHROW
 {
-    return rectangle<pointT>(p, p);
+    return rectangle<pointT>(p, traits::zero_vector<pointT>());
 }
 
 namespace traits
