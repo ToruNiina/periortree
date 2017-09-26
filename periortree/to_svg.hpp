@@ -51,8 +51,9 @@ to_svg(std::basic_ostream<charT, traits>&     os,
     pointT upper = restrict_position(box.centroid + box.width/2, b);
     for(std::size_t i=0; i<2; ++i)
     {
-        if(lower[i] == b.lower()[i] && upper[i] == b.lower()[i])
+        if(box.width[i] >= b.width()[i])
         {
+            lower[i] = b.lower()[i];
             upper[i] = b.upper()[i];
         }
     }
