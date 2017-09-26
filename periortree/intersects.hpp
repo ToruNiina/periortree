@@ -16,7 +16,7 @@ intersects(const rectangle<pointT>& lhs, const rectangle<pointT>& rhs,
     const pointT dc(restrict_direction(lhs.centroid - rhs.centroid, b));
     for(std::size_t i=0; i<traits::dimension<pointT>::value; ++i)
     {
-        if(std::abs(dc[i]) > (lhs.width()[i] + rhs.width()[i]) / 2)
+        if(std::abs(dc[i]) > (lhs.width[i] + rhs.width[i]) / 2)
         {
             return false;
         }
@@ -33,7 +33,7 @@ intersects(const pointT& p, const rectangle<pointT>& r,
     const pointT dc(restrict_direction(p - r.centroid, b));
     for(std::size_t i=0; i<traits::dimension<pointT>::value; ++i)
     {
-        if(std::abs(dc[i]) > r.width()[i] / 2)
+        if(std::abs(dc[i]) > r.width[i] / 2)
         {
             return false;
         }
