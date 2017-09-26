@@ -79,10 +79,12 @@ template<typename T, std::size_t N, typename charT, typename traits>
 std::basic_ostream<charT, traits>&
 operator<<(std::basic_ostream<charT, traits>& os, const point<T, N>& rhs)
 {
+    os << '{';
     for(std::size_t i=0; i<N; ++i)
     {
-        os << rhs[i] << ", ";
+        os << rhs[i] << " ";
     }
+    os << '}';
     return os;
 }
 
