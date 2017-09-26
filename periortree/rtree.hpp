@@ -476,7 +476,8 @@ class rtree
 
         /* assign first 2 entries to node and partner */
         {
-            const boost::array<std::size_t, 2> seeds = this->pick_seeds(entries);
+            const boost::array<std::size_t, 2> seeds =
+                this->pick_seeds(entries.begin(), entries.end());
             std::cerr << "seeds = {" << entries.at(seeds[0]).first
                       << ", " << entries.at(seeds[1]).first << "}" << std::endl;
             std::cerr << "entries.size() = " << entries.size() << std::endl;
@@ -519,7 +520,7 @@ class rtree
             }
 
             const std::pair<std::size_t, bool> next =
-                this->pick_next(entries, node.box, partner.box);
+                this->pick_next(entries.begin(), entries.end(), node.box, partner.box);
             if(next.second) // next is for node
             {
                 std::cerr << "next entry " << entries.at(next.first).first
@@ -541,32 +542,32 @@ class rtree
         return partner;
     }
 
-    // objT should be indexable_type or aabb_type
-    template<typename objT>
+    // ConstIterator::value_type should be
+    // std::pair<std::size_t, {indexable_type or aabb_type}>
+    template<typename ConstIterator>
     boost::array<std::size_t, 2>
-    pick_seeds(const typename gen_static_vector<
-                   std::pair<std::size_t, objT>, max_entry+1>::type& entries)
+    pick_seeds(const ConstIterator first, const ConstIterator last)
     {
-        assert(entries.size() >= 2);
+        assert(std::distance(first, last) >= 2);
 
         boost::array<std::size_t, 2> retval;
 
         scalar_type max_d = 0;
-        for(std::size_t i=0; i<entries.size()-1; ++i)
+        for(ConstIterator iter(first), iend(last - 1); iter != iend; ++iter)
         {
-            for(std::size_t j=i+1; j<entries.size(); ++j)
+            for(ConstIterator jter(iter+1), jend(last); jter != jend; ++jter)
             {
-                const aabb_type E1I = make_aabb(entries.at(i).second);
-                const aabb_type E2I = make_aabb(entries.at(j).second);
+                const aabb_type E1I = make_aabb(iter->second);
+                const aabb_type E2I = make_aabb(jter->second);
                 const aabb_type J = expand(E1I, E2I, this->boundary_);
                 const scalar_type d =
                     area(J, boundary_) - area(E1I, boundary_) - area(E2I, boundary_);
                 if(max_d < std::abs(d))
                 {
                     max_d = std::abs(d);
-                    retval[0] = i;
-                    retval[1] = j;
-                    std::cerr << "found seeds {" << i << ", " << j << "}" << std::endl;
+                    retval[0] = std::distance(first, iter);
+                    retval[1] = std::distance(first, jter);
+                    std::cerr << "found seeds {" << retval[0] << ", " << retval[1] << "}" << std::endl;
                     std::cerr << "max_d = " << max_d << std::endl;
                 }
             }
@@ -574,28 +575,29 @@ class rtree
         return retval;
     }
 
-    // objT should be indexable_type or aabb_type
-    template<typename objT>
-    std::pair<std::size_t, bool> pick_next(const boost::container::static_vector<
-            std::pair<std::size_t, objT>, max_entry+1>& entries,
+    // ConstIterator::value_type should be
+    // std::pair<std::size_t, {indexable_type or aabb_type}>
+    template<typename ConstIterator>
+    std::pair<std::size_t, bool> pick_next(
+            const ConstIterator first, const ConstIterator last,
             const aabb_type& node, const aabb_type& ptnr)
     {
         std::cerr << "pick_next" << std::endl;
-        assert(!entries.empty());
+        assert(first != last);
         bool is_node;
         std::size_t idx;
         scalar_type max_dd = -1;
-        for(std::size_t i=0; i<entries.size(); ++i)
+        for(ConstIterator iter(first); iter != last; ++iter)
         {
-            aabb_type box1 = expand(node, make_aabb(entries.at(i).second), this->boundary_);
-            aabb_type box2 = expand(ptnr, make_aabb(entries.at(i).second), this->boundary_);
+            aabb_type box1 = expand(node, make_aabb(iter->second), this->boundary_);
+            aabb_type box2 = expand(ptnr, make_aabb(iter->second), this->boundary_);
             const scalar_type d1 = area(box1, this->boundary_) - area(node, this->boundary_);
             const scalar_type d2 = area(box2, this->boundary_) - area(ptnr, this->boundary_);
             const scalar_type dd = d1 - d2;
             if(max_dd < std::abs(dd))
             {
                 max_dd = std::abs(dd);
-                idx = i;
+                idx = std::distance(first, iter);
                 is_node = (dd < 0);
             }
         }
@@ -632,7 +634,8 @@ class rtree
         partner.entry.clear(); // for make it sure
 
         /* assign first 2 entries to node and partner */{
-            const boost::array<std::size_t, 2> seeds = this->pick_seeds(entries);
+            const boost::array<std::size_t, 2> seeds =
+                this->pick_seeds(entries.begin(), entries.end());
             std::cerr << "seeds = " << entries.at(seeds[0]).first << " for node, "
                       << entries.at(seeds[1]).first << " for partner." << std::endl;
 
@@ -690,7 +693,7 @@ class rtree
             }
 
             const std::pair<std::size_t, bool> next =
-                this->pick_next(entries, node.box, partner.box);
+                this->pick_next(entries.begin(), entries.end(), node.box, partner.box);
             if(next.second) // next is partner
             {
                 std::cerr << "next entry " << entries.at(next.first).first
