@@ -8,7 +8,8 @@ namespace perior
 {
 
 template<typename pointT, template<typename> class boundaryT>
-inline typename boost::enable_if<traits::is_point<pointT>, bool>::type
+typename boost::enable_if<traits::is_point<pointT>,
+         typename traits::scalar_type_of<pointT>::type>::type
 area(const rectangle<pointT>& rec, const boundaryT<pointT>& b)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
@@ -17,6 +18,7 @@ area(const rectangle<pointT>& rec, const boundaryT<pointT>& b)
     {
         retval *= rec.width[i];
     }
+    assert(retval >= 0);
     return retval;
 }
 
