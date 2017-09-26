@@ -53,8 +53,16 @@ expand(const rectangle<pointT>& lhs, const rectangle<pointT>& rhs,
     {
         const scalar_type l = std::min(l1[i], l2[i]);
         const scalar_type u = std::max(u1[i], u2[i]);
-        center[i] = (u + l) / 2;
-         width[i] =  u - l;
+        width[i] = u - l;
+        if(width[i] >= b.width()[i])
+        {
+            width[i]  =  b.width()[i];
+            center[i] = (b.upper()[i] + b.lower()[i]) / 2;
+        }
+        else
+        {
+            center[i] = (u + l) / 2;
+        }
     }
     return rectangle<pointT>(restrict_position(center, b), width);
 }
