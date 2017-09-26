@@ -589,8 +589,11 @@ class rtree
         scalar_type max_dd = -1;
         for(ConstIterator iter(first); iter != last; ++iter)
         {
-            aabb_type box1 = expand(node, make_aabb(iter->second), this->boundary_);
-            aabb_type box2 = expand(ptnr, make_aabb(iter->second), this->boundary_);
+            const aabb_type box1 =
+                expand(node, make_aabb(iter->second), this->boundary_);
+            const aabb_type box2 =
+                expand(ptnr, make_aabb(iter->second), this->boundary_);
+
             const scalar_type d1 = area(box1, this->boundary_) - area(node, this->boundary_);
             const scalar_type d2 = area(box2, this->boundary_) - area(ptnr, this->boundary_);
             const scalar_type dd = d1 - d2;
