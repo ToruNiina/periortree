@@ -1,6 +1,7 @@
 #include <periortree/rtree.hpp>
 #include <periortree/point.hpp>
 #include <periortree/boundary_conditions.hpp>
+#include <periortree/query.hpp>
 #include <fstream>
 #include <random>
 
@@ -80,5 +81,17 @@ int main()
         std::string fname = std::string("rtree_") + std::to_string(i) + std::string(".svg");
         dump(fname, tree, bdry);
     }
+
+    aabb_t q(boxes.back());
+    std::vector<value_t> vals;
+    tree.query(perior::query::intersects_box(q), std::back_inserter(vals));
+
+    std::sort(vals.begin(), vals.end(), [](const value_t& lhs, const value_t rhs){return lhs.second < rhs.second;});
+
+    std::cout << "queried values = { ";
+    for(auto const& i : vals)
+        std::cout << i.second << ' ';
+    std::cout << '}' << std::endl;
+
     return 0;
 }
