@@ -113,7 +113,7 @@ struct scalar_type_of<point<T, N> >{typedef T type;};
 template<typename T, std::size_t N>
 struct zero_vector_impl<point<T, N> >
 {
-    static BOOST_FORCEINLINE T invoke() BOOST_NOEXCEPT_OR_NOTHROW
+    static BOOST_FORCEINLINE point<T, N> invoke() BOOST_NOEXCEPT_OR_NOTHROW
     {
         return point<T, N>();
     }
