@@ -647,7 +647,7 @@ class rtree
                 i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
             {
                 value_type const& val = container_.at(*i);
-                if(q.match(indexable_getter_(val)) && q.match(val))
+                if(q.match(indexable_getter_(val), this->boundary_) && q.match(val))
                 {
                     *out = val;
                     ++out;
@@ -660,7 +660,7 @@ class rtree
                 i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
             {
                 const std::size_t next = *i;
-                if(q.match(tree_.at(next).box))
+                if(q.match(tree_.at(next).box, this->boundary_))
                 {
                     this->query_impl(next, q, out);
                 }
