@@ -44,11 +44,51 @@ struct query_intersects_box
 };
 
 template<typename pointT>
-inline typename boost::enable_if<::perior::traits::is_point<pointT>,
-                                 query_intersects_box<pointT> >::type
+struct query_within_box
+{
+    BOOST_STATIC_ASSERT(::perior::traits::is_point<pointT>::value);
+
+    explicit query_within_box(const rectangle<pointT>& rct): rect(rct){}
+
+    template<typename boundaryT>
+    BOOST_FORCEINLINE
+    bool match(const pointT& p, boundaryT const& b) const BOOST_NOEXCEPT_OR_NOTHROW
+    {
+        return ::perior::within(p, rect, b);
+    }
+
+    template<typename boundaryT>
+    BOOST_FORCEINLINE
+    bool match(const rectangle<pointT>& r, boundaryT const& b)
+        const BOOST_NOEXCEPT_OR_NOTHROW
+    {
+        return ::perior::within(r, rect, b);
+    }
+
+    template<typename T>
+    BOOST_FORCEINLINE
+    bool match(T const& r) const BOOST_NOEXCEPT_OR_NOTHROW
+    {
+        return true;
+    }
+
+    rectangle<pointT> rect;
+};
+
+template<typename pointT>
+inline typename boost::enable_if<
+    ::perior::traits::is_point<pointT>, query_intersects_box<pointT> >::type
 intersects_box(rectangle<pointT> const& rect)
 {
     return query_intersects_box<pointT>(rect);
+}
+
+template<typename pointT>
+inline typename boost::enable_if<
+    ::perior::traits::is_point<pointT>, query_intersects_box<pointT> >::type
+within_box(rectangle<pointT> const& rect)
+{
+    return query_within_box<pointT>(rect);
 }
 
 } // query
