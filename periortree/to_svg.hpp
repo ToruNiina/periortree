@@ -18,8 +18,8 @@ to_svg(std::basic_ostream<charT, traits>& os,
        const std::size_t                  stroke_width = 1,
        const std::string&                 fill         = "none")
 {
-    using namespace traits;
-    BOOST_STATIC_ASSERT_MSG(dimension<pointT>::value == 2,
+    BOOST_STATIC_ASSERT_MSG(
+            ::perior::traits::dimension<pointT>::value == 2,
             "to_svg works only with 2-dimensional rectangle");
 
     const pointT  xy = box.centroid - (box.width / 2);
@@ -40,8 +40,8 @@ to_svg(std::basic_ostream<charT, traits>&     os,
        const std::size_t                      stroke_width = 1,
        const std::string&                     fill         = "none")
 {
-    using namespace traits;
-    BOOST_STATIC_ASSERT_MSG(dimension<pointT>::value == 2,
+    BOOST_STATIC_ASSERT_MSG(
+            ::perior::traits::dimension<pointT>::value == 2,
             "to_svg works only with 2-dimensional rectangle");
 
     // split box according to the boundary
