@@ -507,7 +507,7 @@ class rtree
                 const aabb_type J = expand(E1I, E2I, this->boundary_);
                 const scalar_type d =
                     area(J, boundary_) - area(E1I, boundary_) - area(E2I, boundary_);
-                assert(d >= 0);
+//                 assert(d >= 0); // if two overlaps, ...
                 if(max_d < d)
                 {
                     max_d = d;
