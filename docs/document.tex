@@ -92,7 +92,7 @@ applying the PBCs to each operations for AABBs that are performed in each step
 to maintain an R-Tree. By allowing an AABB corresponding to each node to extend
 along PBCs, an R-Tree become capable of containing objects in the most natural
 way on PBCs and overcoming the limitation of containing finite-sized object
-(figure\ref{fig-method-rtree-pbc}CD).
+(figure\ref{fig-method-rtree-pbc}D).
 With this method, it is not needed to copy objects or queries at all.
 Moreover, using the information about the boundary condition, it has more chance
 to reduce the AABBs of each node. Since the efficiency of spatial searching on
@@ -124,59 +124,64 @@ Here I introduce some operations to modify and handle rectangles on PBCs.
 I do not modify the algorithm to grow and maintain an R-Tree at all.
 Hence, in this setion, I do not show algorithm to construct R-Tree itself.
 It means that this method can potentially be applied for some of the R-Tree
-variants and the other spatial indexing methods that uses AABBs.
+variants and the other spatial indexing methods that is based on BVH and
+uses AABBs.
 
-Because the rectangles that are used in R-Tree are axis-aligned, it is
-enough to show the operation for one dimension to provide the whole algorithm.
-Applying those procedure to each dimensions successively, these operations can
-easily be extended for higher dimension cases.
+Because the rectangles used in R-Tree are axis-aligned, it is enough to show an
+operation for one dimension to provide the whole algorithm.
+Applying it to each dimensions successively, these operations can be extended
+straightforwardly for higher dimension cases.
 
-\paragraph{Representation of the PBCs.}
-As an unit cell of the PBCs, I consider only cuboids.
-It make the rectangle operations on the condition drastically easier compared to
-other shape of unit cells.
-I restrict coordinates of all the objects to inside of the unit cell.
-There are well-known alrogithm to restrict coordinates and vectors to the unit
-cell. In this paper, I call them as \textbf{RestrictPosition} and
+\paragraph{Representation of PBCs.}
+For simplicity, I consider only cuboids as an unit cell of the PBCs.
+Here, all the coordinates of objects are restricted to inside of the unit cell.
+There are well-known alrogithm to restrict coordinates and vectors to the unit cell.
+In this paper, I call them as \textbf{RestrictPosition} and
 \textbf{RestrictVector}, respectively.
 
-\paragraph{Representation of an rectangles.}
-There are some options to represent an rectangle.
-For example, a pair of coordinates describing upper and lower limit in each
-dimensions is the widely used representation of an axis aligned rectangle.
-Besides, a rectangle can be represented as a pair of coordinate and
-vector describing its characteristic position such as centroid or lower limit
-and width of rectangle in each dimension.
-Because the method proposed in this paper quite often uses centroids of
-rectangles, here I represent a rectangle as a pair of centroid position and
-width vector.
+\paragraph{Representation of AABBs.}
+There are three common representations for AABBs
+~\cite{real-time-collision-detection} \ref{fig-rectangle-rep}.
+The first one is a pair of the minimum and maximum coordinate values
+in each dimension. The second one is a pair of the minimum coordinate values and
+its width in each dimension. The third one is a pair of the center position and
+half-width in each dimension. Here, I call it as min-max, min-widths, and
+center-radius representation, respectively.
+
+Because the method proposed in this paper quite often uses center position of
+an AABB, here I employ an center-radius representation.
 
 \begin{equation}
-    rectangle = \{centroid, width\}
+    rectangle = \{center, radius\}
 \end{equation}
 
-Of course, all the representations have identical information, one can easily
-convert a certain representation to another. By algorithm\ref{centroid_aabb} and
-\ref{width_aabb}, one can easily convert the upper-lower representation to
-the centroid-width representation.
+Needless to say, all the representations have identical information, one can
+convert one representation to another. By algorithm\ref{center_aabb} and
+\ref{radius_aabb}, one can easily convert the min-max representation to
+the center-radius representation. It should be noted that a maximum coordinate
+value might be smaller than the corresponding minimum coordinate value because
+all the coordinates are restricted to inside of the unit cell.
 
 \begin{figure}[hbt]
-    \includegraphics[width=8.4cm, bb=3 2 233 83]{fig3.eps}
+    \includegraphics[width=8.4cm, bb=2 6 226 165]{fig-rect-rep.eps}
     \caption{
     (\textbf{A})
-    Representation of rectangle as a pair of upper and lower coordinates.
+    Three popular representations of an AABB. First one is min-max,
+    second one is min-widths, and third one is center-radius representation,
+    respectively.
     (\textbf{B})
-    Representation of rectangle as a pair of a centroid and width vector.
+    Three representations on PBCs. The AABBs are colored in the same way as
+    \textbf{A}.
     }
     \label{fig-rectangle-rep}
 \end{figure}
 
 \begin{algorithm}
     \caption{calculate the centroid of an AABB on PBCs.}
-    \label{centroid_aabb}
+    \label{center_aabb}
     \begin{algorithmic}
-        \State $U \gets$ upper limit of AABB restricted in the unit cell
-        \State $L \gets$ lower limit of AABB restricted in the unit cell
+        \State $U \gets$ maximum coordinate values of an AABB
+        \State $L \gets$ minimum coordinate values of an AABB
         \State $B \gets$ the unit cell of a boundary
         \Function{CentroidAABB}{$U, L, B$}
             \If{$U < L$}
@@ -191,10 +196,10 @@ the centroid-width representation.
 
 \begin{algorithm}
     \caption{calculate the width of an AABB on PBCs.}
-    \label{width_aabb}
+    \label{radius_aabb}
     \begin{algorithmic}
-        \State $U \gets$ upper limit of AABB restricted in the unit cell
-        \State $L \gets$ lower limit of AABB restricted in the unit cell
+        \State $U \gets$ maximum coordinate values of an AABB
+        \State $L \gets$ minimum coordinate values of an AABB
         \State $B \gets$ the unit cell of a boundary
         \Function{WidthAABB}{$U, L, B$}
             \If{$U < L$}
@@ -331,7 +336,7 @@ algorithms in 1 dimension.
      \end{algorithmic}
 \end{algorithm}
 
-\begin{figure}[thb]
+\begin{figure}[htb]
     \includegraphics[width=8.4cm, bb=1 9 196 125]{fig2.eps}
     \caption{
     Visual description of geometrical relationships.
@@ -373,7 +378,7 @@ accelerate many kind of sientific simulations, it is expected that this novel
 method will have an important role for the simulations that will be performed in
 the next decade.
 
-\bibliographystyle{plain}
+\bibliographystyle{unsrt}
 \bibliography{library}{}
 
 \end{document}
