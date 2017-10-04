@@ -16,7 +16,7 @@ area(const rectangle<pointT>& rec, const boundaryT<pointT>& b)
     typename traits::scalar_type_of<pointT>::type retval(1);
     for(std::size_t i=0; i<traits::dimension<pointT>::value; ++i)
     {
-        retval *= rec.width[i];
+        retval *= rec.radius[i] * 2;
     }
     assert(retval >= 0);
     return retval;

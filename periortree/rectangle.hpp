@@ -16,46 +16,46 @@ struct rectangle
 
     rectangle(){}
 
-    explicit rectangle(const point_type& w)
-        : centroid(traits::zero_vector<point_type>()), width(w)
+    explicit rectangle(const point_type& r)
+        : center(traits::zero_vector<point_type>()), radius(r)
     {}
 
-    rectangle(const point_type& c, const point_type& w)
-        : centroid(c), width(w)
+    rectangle(const point_type& c, const point_type& r)
+        : center(c), radius(r)
     {}
 
     rectangle(const rectangle& rhs)
-        : centroid(rhs.centroid), width(rhs.width)
+        : center(rhs.center), radius(rhs.radius)
     {}
     rectangle& operator=(const rectangle& rhs)
     {
-        centroid = rhs.centroid;
-        width    = rhs.width;
+        center = rhs.center;
+        radius = rhs.radius;
         return *this;
     }
 
-    point_type centroid, width;
+    point_type center, radius;
 };
 
 template<typename pointT>
 inline bool operator==(const rectangle<pointT>& lhs, const rectangle<pointT>& rhs)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
-    return lhs.centroid == rhs.centroid && lhs.width == rhs.width;
+    return lhs.center == rhs.center && lhs.radius == rhs.radius;
 }
 
 template<typename pointT>
 inline bool operator!=(const rectangle<pointT>& lhs, const rectangle<pointT>& rhs)
     BOOST_NOEXCEPT_OR_NOTHROW
 {
-    return lhs.centroid != rhs.centroid || lhs.width != rhs.width;
+    return lhs.center != rhs.center || lhs.radius != rhs.radius;
 }
 
 template<typename pointT, typename charT, typename traits>
 std::basic_ostream<charT, traits>&
 operator<<(std::basic_ostream<charT, traits>& os, const rectangle<pointT>& rect)
 {
-    os << "rectangle {c = " << rect.centroid << ", w = " << rect.width << '}';
+    os << "rectangle {c = " << rect.center << ", r = " << rect.radius << '}';
     return os;
 }
 

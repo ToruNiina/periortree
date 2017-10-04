@@ -22,8 +22,8 @@ to_svg(std::basic_ostream<charT, traits>& os,
             ::perior::traits::dimension<pointT>::value == 2,
             "to_svg works only with 2-dimensional rectangle");
 
-    const pointT  xy = box.centroid - (box.width / 2);
-    const pointT& rg = box.width;
+    const pointT xy = box.center - box.radius;
+    const pointT rg = box.radius * 2;
     os << "<rect x = \""   << xy[0]  << "\" y = \""      << xy[1]
        << "\" width = \""  << rg[0]  << "\" height = \"" << rg[1]
        << "\" stroke = \"" << stroke << "\" stroke-width = \"" << stroke_width
@@ -47,11 +47,11 @@ to_svg(std::basic_ostream<charT, traits>&     os,
     // split box according to the boundary
     // here, use box
     std::vector<std::pair<pointT, pointT> > boxes; boxes.reserve(4);
-    pointT lower = restrict_position(box.centroid - box.width/2, b);
-    pointT upper = restrict_position(box.centroid + box.width/2, b);
+    pointT lower = restrict_position(box.center - box.radius, b);
+    pointT upper = restrict_position(box.center + box.radius, b);
     for(std::size_t i=0; i<2; ++i)
     {
-        if(box.width[i] >= b.width()[i])
+        if(box.radius[i] >= b.half_width()[i])
         {
             lower[i] = b.lower()[i];
             upper[i] = b.upper()[i];

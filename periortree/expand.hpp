@@ -16,20 +16,20 @@ expand(const rectangle<pointT>& lhs, const rectangle<pointT>& rhs,
 {
     typedef typename traits::scalar_type_of<pointT>::type scalar_type;
 
-    const pointT l1 = lhs.centroid - lhs.width / 2;
-    const pointT u1 = lhs.centroid + lhs.width / 2;
-    const pointT l2 = rhs.centroid - rhs.width / 2;
-    const pointT u2 = rhs.centroid + rhs.width / 2;
+    const pointT l1 = lhs.center - lhs.radius;
+    const pointT u1 = lhs.center + lhs.radius;
+    const pointT l2 = rhs.center - rhs.radius;
+    const pointT u2 = rhs.center + rhs.radius;
 
-    pointT center, width;
+    pointT center, radius;
     for(std::size_t i=0; i<traits::dimension<pointT>::value; ++i)
     {
         const scalar_type l = std::min(l1[i], l2[i]);
         const scalar_type u = std::max(u1[i], u2[i]);
         center[i] = (u + l) / 2;
-         width[i] =  u - l;
+        radius[i] = (u - l) / 2;
     }
-    return rectangle<pointT>(restrict_position(center, b), width);
+    return rectangle<pointT>(restrict_position(center, b), radius);
 }
 
 
@@ -42,21 +42,21 @@ expand(const rectangle<pointT>& lhs, const rectangle<pointT>& rhs,
 {
     typedef typename traits::scalar_type_of<pointT>::type scalar_type;
 
-    const pointT dc(restrict_direction(rhs.centroid - lhs.centroid, b));
-    const pointT l1 = lhs.centroid - lhs.width / 2;
-    const pointT u1 = lhs.centroid + lhs.width / 2;
-    const pointT l2 = lhs.centroid + dc - rhs.width / 2;
-    const pointT u2 = lhs.centroid + dc + rhs.width / 2;
+    const pointT dc(restrict_direction(rhs.center - lhs.center, b));
+    const pointT l1 = lhs.center - lhs.radius;
+    const pointT u1 = lhs.center + lhs.radius;
+    const pointT l2 = lhs.center + dc - rhs.radius;
+    const pointT u2 = lhs.center + dc + rhs.radius;
 
-    pointT center, width;
+    pointT center, radius;
     for(std::size_t i=0; i<traits::dimension<pointT>::value; ++i)
     {
         const scalar_type l = std::min(l1[i], l2[i]);
         const scalar_type u = std::max(u1[i], u2[i]);
-        width[i] = u - l;
         center[i] = (u + l) / 2;
+        radius[i] = (u - l) / 2;
     }
-    return rectangle<pointT>(restrict_position(center, b), width);
+    return rectangle<pointT>(restrict_position(center, b), radius);
 }
 
 template<typename pointT>
@@ -67,18 +67,18 @@ expand(const rectangle<pointT>& rct, const pointT& p,
     BOOST_NOEXCEPT_OR_NOTHROW
 {
     typedef typename traits::scalar_type_of<pointT>::type scalar_type;
-    const pointT lower = rct.centroid - rct.width / 2;
-    const pointT upper = rct.centroid + rct.width / 2;
+    const pointT lower = rct.center - rct.radius;
+    const pointT upper = rct.center + rct.radius;
 
-    pointT center, width;
+    pointT center, radius;
     for(std::size_t i=0; i<traits::dimension<pointT>::value; ++i)
     {
         const scalar_type l = std::min(lower[i], p[i]);
         const scalar_type u = std::max(upper[i], p[i]);
         center[i] = (u + l) / 2;
-         width[i] =  u - l;
+        radius[i] = (u - l) / 2;
     }
-    return rectangle<pointT>(restrict_position(center, b), width);
+    return rectangle<pointT>(restrict_position(center, b), radius);
 }
 
 template<typename pointT>
@@ -90,20 +90,20 @@ expand(const rectangle<pointT>& rct, const pointT& p,
 {
     typedef typename traits::scalar_type_of<pointT>::type scalar_type;
 
-    const pointT dc(restrict_direction(p - rct.centroid, b));
-    const pointT lower = rct.centroid - rct.width / 2;
-    const pointT upper = rct.centroid + rct.width / 2;
-    const pointT p_ = rct.centroid + dc;
+    const pointT dc(restrict_direction(p - rct.center, b));
+    const pointT lower = rct.center - rct.radius;
+    const pointT upper = rct.center + rct.radius;
+    const pointT p_ = rct.center + dc;
 
-    pointT center, width;
+    pointT center, radius;
     for(std::size_t i=0; i<traits::dimension<pointT>::value; ++i)
     {
         const scalar_type l = std::min(lower[i], p_[i]);
         const scalar_type u = std::max(upper[i], p_[i]);
         center[i] = (u + l) / 2;
-         width[i] =  u - l;
+        radius[i] = (u - l) / 2;
     }
-    return rectangle<pointT>(restrict_position(center, b), width);
+    return rectangle<pointT>(restrict_position(center, b), radius);
 }
 
 } // perior
