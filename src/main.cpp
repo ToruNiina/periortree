@@ -45,8 +45,8 @@ int main()
         const point_t l(xidx * 10, yidx * 10);
         const point_t u(l[0] + 10, l[1] + 10);
 
-        box.centroid = (u + l) / 2;
-        box.width    =  u - l;
+        box.center = (u + l) / 2;
+        box.radius = (u - l) / 2;
         boxes.push_back(box);
 
         tree.insert(value_t(box, i));
@@ -73,8 +73,8 @@ int main()
         const point_t l(xidx * 10, yidx * 10);
         const point_t u(l[0] + 10, l[1] + 10);
 
-        box.centroid =(u + l) / 2;
-        box.width    = u - l;
+        box.center = (u + l) / 2;
+        box.radius = (u - l) / 2;
         boxes.push_back(box);
 
         tree.insert(value_t(box, i));
