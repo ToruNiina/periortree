@@ -213,16 +213,16 @@ all the coordinates are restricted to inside of the unit cell.
 \end{algorithm}
 
 \paragraph{Expanding AABBs on PBCs.}
-Expanding an AABB to make it a minimal bounding box of its contents is one of
-the most important operations done to form R-Tree.
-Because the total area that is covered by AABBs in the nodes of R-Tree affects
-the efficiency of spatial searching, it is needed to find the way to make the
-area of rectangle in each node as small as possible.
+Expanding an AABB to ensure it contains a new contents is one of the most
+important operations in an R-Tree algorithms.
+Because the total area that is covered by AABBs in the nodes of an R-Tree
+affects the efficiency of spatial searching, it is needed to find the way to
+make the area of rectangle in each node as small as possible.
 
 The algorithm to find the minimum expansion of AABB to contain another AABB on
 PBCs is shown in algorithm ~\ref{expand_aabb_aabb}.
 The size of bounding box that contains two rectangles is determined by the
-distance between their centroids because of the symmetry of a rectangule.
+distance between their center points because of the symmetry of a rectangule.
 Therefore, by minimizing the distance between their centroids, the minimum
 expansion can be found. To minimize the distance between two points on PBCs,
 the \textbf{RestrictVector} can be used.
@@ -235,29 +235,28 @@ the \textbf{RestrictVector} can be used.
         \State $R2 \gets$ rectangle to be contained
         \State $B  \gets$ boundary
         \Function{ExpandAABB}{$R1, R2, B$}
-            \State $dc \gets R2.centroid - R1.centroid$
+            \State $dc \gets R2.center - R1.center$
             \State $dc \gets$ \Call{RestrictVector}{dc, B}
 
-            \State $l1 \gets R1.centroid - R1.width / 2$
-            \State $u1 \gets R1.centroid + R1.width / 2$
-            \State $l2 \gets (R1.centroid + dc) - R2.width / 2$
-            \State $u2 \gets (R1.centroid + dc) + R2.width / 2$
+            \State $l1 \gets R1.center - R1.radius$
+            \State $u1 \gets R1.center + R1.radius$
+            \State $l2 \gets (R1.center + dc) - R2.radius$
+            \State $u2 \gets (R1.center + dc) + R2.radius$
 
-            \State $L \gets \Call{min}{l1, l2}$
-            \State $U \gets \Call{max}{u1, u2}$
-            \State $C \gets (L + U) / 2$
-            \State $W \gets U - L$
-            \State $C \gets$ \Call{RestrictPosition}{C, B}
+            \State $L  \gets \Call{min}{l1, l2}$
+            \State $U  \gets \Call{max}{u1, u2}$
+            \State $C  \gets (L + U) / 2$
+            \State $HW \gets (U - L) / 2$
+            \State $C  \gets$ \Call{RestrictPosition}{C, B}
 
-            \State \Return $\{C, W\}$
+            \State \Return $\{C, HW\}$
         \EndFunction
      \end{algorithmic}
 \end{algorithm}
 
-For the case of containing points, it become simpler as described in the
-algorithm ~\ref{expand_aabb_point}. By minimizing the distance between centroid
-of the rectangle and the point to be contained, the minimum expansion can be
-implemented.
+For the case of a point, it become simpler as described in the algorithm
+~\ref{expand_aabb_point}. By minimizing the distance between centroid of the
+rectangle and the point to be contained, the minimum expansion can be found.
 
 \begin{algorithm}
     \caption{expand AABB so that it contains a point}
@@ -267,31 +266,31 @@ implemented.
         \State $P \gets$ point to be contained
         \State $B \gets$ boundary
         \Function{ExpandAABB}{$R, P, B$}
-            \State $dc \gets P - R.centroid$
+            \State $dc \gets P - R.center$
             \State $dc \gets$ \Call{RestrictVector}{dc, B}
 
-            \State $l \gets R.centroid - R.width / 2$
-            \State $u \gets R.centroid + R.width / 2$
+            \State $l \gets R.center - R.radius$
+            \State $u \gets R.center + R.radius$
 
-            \State $L \gets \Call{min}{l, P}$
-            \State $U \gets \Call{max}{u, P}$
-            \State $C \gets (L + U) / 2$
-            \State $W \gets U - L$
+            \State $L  \gets \Call{min}{l, P}$
+            \State $U  \gets \Call{max}{u, P}$
+            \State $C  \gets (L + U) / 2$
+            \State $HW \gets (U - L) / 2$
 
             \State $C \gets$ \Call{RestrictPosition}{C, B}
-            \State \Return $\{C, W\}$
+            \State \Return $\{C, HW\}$
         \EndFunction
      \end{algorithmic}
 \end{algorithm}
 
 \paragraph{Detecting an object includes or intersects the other object}
 
-To find an object in an R-Tree, it is needed that the way to check whether an
-rectangle intersects or be inside of an rectangle.
+To find an object in an R-Tree, the algorithm is needed to check whether an
+rectangle intersects or be inside of another rectangle.
 It also can be determined by using the minimum distance between centroids of the
 rectangles.
-Figure ~\ref{fig-geometric-relationship} graphically shows the idea of each
-algorithms in 1 dimension.
+The algorithm for the center-radius representation can be applied after
+restricting the inter center points vector.
 
 \begin{algorithm}
     \caption{Check whether an AABB is inside of an AABB}
@@ -300,10 +299,10 @@ algorithms in 1 dimension.
         \State $R2 \gets$ rectangle that might be inside of R1
         \State $B  \gets$ boundary
         \Function{IsAABBInsideOfAABB}{$R1, R2, B$}
-            \State $dc \gets R1.centroid - R2.centroid$
+            \State $dc \gets R1.center - R2.center$
             \State $dc \gets$ \Call{RestrictVector}{dc, B}
 
-            \State \Return \Call{abs}{dc} $\leq (R1.width - R2.width) / 2$
+            \State \Return \Call{abs}{dc} $\leq (R1.radius - R2.radius)$
         \EndFunction
      \end{algorithmic}
 \end{algorithm}
@@ -315,9 +314,9 @@ algorithms in 1 dimension.
         \State $P \gets$ point that might be inside of R
         \State $B \gets$ boundary
         \Function{IsPointInsideOfAABB}{$R, P, B$}
-            \State $dc \gets R.centroid - P$
+            \State $dc \gets R.center - P$
             \State $dc \gets$ \Call{RestrictVector}{dc, B}
-            \State \Return \Call{abs}{dc} $\leq (R.width) / 2$
+            \State \Return \Call{abs}{dc} $\leq R.radius$
         \EndFunction
      \end{algorithmic}
 \end{algorithm}
@@ -329,9 +328,9 @@ algorithms in 1 dimension.
         \State $R2 \gets$ rectangle that might intersect to R1
         \State $B  \gets$ boundary
         \Function{IntersectsAABB}{$R1, R2, B$}
-            \State $dc \gets R.centroid - R.centroid$
+            \State $dc \gets R.center - R.center$
             \State $dc \gets$ \Call{RestrictVector}{dc, B}
-            \State \Return \Call{abs}{dc} $\leq (R1.width + R2.width) / 2$
+            \State \Return \Call{abs}{dc} $\leq (R1.radius + R2.radius)$
         \EndFunction
      \end{algorithmic}
 \end{algorithm}
