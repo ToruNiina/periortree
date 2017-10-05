@@ -172,7 +172,7 @@ class rtree
     {
         const std::string& clr = clrs.at(depth % 3);
         const node_type& node = tree_.at(N);
-        to_svg(os, node.box, this->boundary_, clr, 5, "none");
+        to_svg(os, node.box, this->boundary_, clr, 1, "none");
         os << '\n';
         if(node.is_leaf)
         {
