@@ -141,7 +141,7 @@ In this paper, I call them as \textbf{RestrictPosition} and
 
 \paragraph{Representation of AABBs.}
 There are three common representations for AABBs
-~\cite{real-time-collision-detection} \ref{fig-rectangle-rep}.
+(figure~\ref{fig-rectangle-rep})~\cite{real-time-collision-detection}.
 The first one is a pair of the minimum and maximum coordinate values
 in each dimension. The second one is a pair of the minimum coordinate values and
 its width in each dimension. The third one is a pair of the center position and
@@ -176,7 +176,7 @@ all the coordinates are restricted to inside of the unit cell.
     \label{fig-rectangle-rep}
 \end{figure}
 
-\begin{algorithm}
+\begin{algorithm}[thb]
     \caption{calculate the centroid of an AABB on PBCs.}
     \label{center_aabb}
     \begin{algorithmic}
@@ -194,7 +194,7 @@ all the coordinates are restricted to inside of the unit cell.
      \end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}
+\begin{algorithm}[thb]
     \caption{calculate the width of an AABB on PBCs.}
     \label{radius_aabb}
     \begin{algorithmic}
@@ -227,7 +227,7 @@ Therefore, by minimizing the distance between their centroids, the minimum
 expansion can be found. To minimize the distance between two points on PBCs,
 the \textbf{RestrictVector} can be used.
 
-\begin{algorithm}
+\begin{algorithm}[thb]
     \caption{expand AABB so that it contains another AABB}
     \label{expand_aabb_aabb}
     \begin{algorithmic}
@@ -258,7 +258,7 @@ For the case of a point, it become simpler as described in the algorithm
 ~\ref{expand_aabb_point}. By minimizing the distance between centroid of the
 rectangle and the point to be contained, the minimum expansion can be found.
 
-\begin{algorithm}
+\begin{algorithm}[thb]
     \caption{expand AABB so that it contains a point}
     \label{expand_aabb_point}
     \begin{algorithmic}
@@ -292,7 +292,7 @@ rectangles.
 The algorithm for the center-radius representation can be applied after
 restricting the inter center points vector.
 
-\begin{algorithm}
+\begin{algorithm}[thb]
     \caption{Check whether an AABB is inside of an AABB}
     \begin{algorithmic}
         \State $R1 \gets$ rectangle
@@ -307,7 +307,7 @@ restricting the inter center points vector.
      \end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}
+\begin{algorithm}[thb]
     \caption{Check whether a point is inside of an AABB}
     \begin{algorithmic}
         \State $R \gets$ rectangle
@@ -321,7 +321,7 @@ restricting the inter center points vector.
      \end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}
+\begin{algorithm}[thb]
     \caption{Check whether an AABB intersects to another AABB}
     \begin{algorithmic}
         \State $R1 \gets$ rectangle
@@ -335,24 +335,34 @@ restricting the inter center points vector.
      \end{algorithmic}
 \end{algorithm}
 
+\section*{Results}
+
+The codes that are used for this study is available on GitHub
+~\cite{periortree-2017}.
+
+The three steps of expansion of an AABB to contain rectangles is shown in
+figure~\ref{fig-result}A.
+Here, there is only one bounding box in the figure.
+Because it lies beyond the boundary, the periodic image of box is shown separately.
+
+In figure~\ref{fig-result}B the result of a query is shown. It successfully
+detects an object that locates beyond the boundaries. It should be noted that
+while there are four rectangles drawn in the second panel of figure
+~\ref{fig-result}B, actually there is only one rectangle.
+
 \begin{figure}[htb]
-    \includegraphics[width=8.4cm, bb=1 9 196 125]{fig2.eps}
+    \includegraphics[width=8.4cm, bb=4 6 237 212]{fig-result-expand-intersect.eps}
     \caption{
-    Visual description of geometrical relationships.
     (\textbf{A})
-    Intersection detection of rectangles by widths and centroids. If sum of half
-    width is less than the distance between centroids, the rectangles intersect.
+    The three steps to expand AABB colored in red to contain black rectangles.
+    It can be seen that the AABB are expanded beyond the boundary.
     (\textbf{B})
-    Inclusion detection of rectangles. If sum of distance between centroids and
-    half width of the rectangle that might be included is less than the half
-    width of the rectangle that might includes the other, the rectangles have
-    including-included relationship.
-    (\textbf{C})
-    For point, intersection and inclusion means the same thing. If the distance
-    between the centroid of the rectangle and the point is less than the half
-    width of the centroid, the point intersects to the rectangle.
+    The result of querying objects that intersect to yellow rectangle.
+    The object contained in the R-Tree is shown as small square boxes.
+    The boxes that are detected as intersecting to the query rectangle is
+    colored in red.
     }
-    \label{fig-geometric-relationship}
+    \label{fig-result}
 \end{figure}
 
 \section*{Conclusion}
