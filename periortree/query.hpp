@@ -33,11 +33,18 @@ struct query_intersects_box
         return ::perior::intersects(r, rect, b);
     }
 
+    // for objects
     template<typename T>
     BOOST_FORCEINLINE
     bool match(T const& r) const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return true;
+    }
+
+    BOOST_FORCEINLINE
+    rectangle<pointT> const& rectangle() const BOOST_NOEXCEPT_OR_NOTHROW
+    {
+        return rect;
     }
 
     rectangle<pointT> rect;
@@ -70,6 +77,12 @@ struct query_within_box
     bool match(T const& r) const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return true;
+    }
+
+    BOOST_FORCEINLINE
+    rectangle<pointT> const& rectangle() const BOOST_NOEXCEPT_OR_NOTHROW
+    {
+        return rect;
     }
 
     rectangle<pointT> rect;
