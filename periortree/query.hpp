@@ -42,7 +42,7 @@ struct query_intersects_box
     }
 
     BOOST_FORCEINLINE
-    rectangle<pointT> const& rectangle() const BOOST_NOEXCEPT_OR_NOTHROW
+    rectangle<pointT> const& box() const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return rect;
     }
@@ -80,7 +80,7 @@ struct query_within_box
     }
 
     BOOST_FORCEINLINE
-    rectangle<pointT> const& rectangle() const BOOST_NOEXCEPT_OR_NOTHROW
+    rectangle<pointT> const& box() const BOOST_NOEXCEPT_OR_NOTHROW
     {
         return rect;
     }

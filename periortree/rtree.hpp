@@ -660,7 +660,7 @@ class rtree
                 i(node.entry.begin()), e(node.entry.end()); i != e; ++i)
             {
                 const std::size_t next = *i;
-                if(intersects(q.rectangle(), tree_.at(next).box, this->boundary_))
+                if(intersects(q.box(), tree_.at(next).box, this->boundary_))
                 {
                     this->query_impl(next, q, out);
                 }
