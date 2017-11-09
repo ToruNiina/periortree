@@ -10,16 +10,26 @@
 \usepackage{algorithm}
 \usepackage{graphicx}
 \usepackage{color} % ex.) \textcolor{color}{text}
+\usepackage{url}
 
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
+
+\setcounter{topnumber}{3}
+\setcounter{dbltopnumber}{6}
+\renewcommand\topfraction{.9}
+\renewcommand\textfraction{.1}
+\renewcommand\dbltopfraction{.9}
+\renewcommand\dblfloatpagefraction{.9}
 
 \begin{document}
 
 \twocolumn[
     \begin{flushleft}
         {\Large
-        \textbf\newline{An Extention of R-Tree for Periodic Boundary Conditions}
+        \textbf\newline{
+            Periortree: An Extention of R-Tree for Periodic Boundary Conditions
+            }
         }
         \newline
         \\
@@ -42,13 +52,13 @@
     periodic boundary conditions by introducing a set of operations for
     rectangles.
     Unlike existing methods, this method works without any kind of additional
-    copies of objects or queries.
+    set of objects or queries.
     Moreover, because this method reduces the size of bounding boxes for each
-    nodes of R-Tree in the natural way in the conditions, it is expected to
-    increase the efficiency of processing spatial queries.
-    The method can essentially be applied not only to the Guttman's original
-    R-Tree but also to other data structures or algorithms if they use rectangles
-    on periodic boudary conditions. The implementation is available on GitHub.
+    nodes according to the conditions, it is expected to increase the efficiency.
+    The method is essentially applicable not only to the Guttman's original
+    R-Tree but also to other data structures that use axis-aligned bounding
+    boxes.
+    The implementation is available on GitHub.
     \bigskip
 ]
 
@@ -60,18 +70,18 @@ scale simulation, both huge amount of computational resources and efficient
 simulation softwares are required.
 
 In most cases, searching for objects that satisfy some geometrical conditions
-is one of the most costly operation in the simulation. Generally, an efficient
-method for spatial search drastically accelerates not only the whole simulation
-processes, but also the data analysis of simulation results. Therefore, a method
-that efficiently processes spatial search accelerates whole process of scientific
-simulation research.
+is one of the most time-consuming operation in the simulation. Generally, an
+efficient algorithm to search spatial objects drastically accelerates not only
+the whole simulation processes, but also the data analysis of simulation results.
+Therefore, a method that efficiently processes spatial search accelerates whole
+process of scientific simulation research.
 
 An R-Tree is a widely used data structure representing bounding volume
 hierarchies (BVH) by using axis-aligned bounding box (AABB) for all its entries
 \cite{Guttman1984}. It is capable of containing both sizeless and finite sized
-objects such as points, segments, spheres and etc. As its efficiency, many
-variants have been proposed and are applied for many problems in a broad range
-of fields.
+objects such as points, segments, rectangles, spheres and etc. As its efficiency,
+many variants have been proposed and are applied for many problems in a broad
+range of fields \cite{Beckmann1990, Leuteneggert1997, Berchtold2001, CoSTR-R-tree2016}.
 
 In order to use it with periodic boundary conditions (PBCs), currently,
 two methods are proposed (figure\ref{fig-method-rtree-pbc})\cite{CoSTR-R-tree2016}.
@@ -80,27 +90,39 @@ periodically copies all the objects in the simulation system along each dimensio
 Although it can search objects associated with the adjacent periodic images in
 the same way as normal R-Tree, it consumes memory $3^D$ fold a lot (here $D$
 reprecents a number of dimension).
+
 Figure \ref{fig-method-rtree-pbc}B showes another method copies not the whole
 system but a query in the same manner if the query goes outside of the boundary.
-Although it works completely fine with sizeless particles, it has a limitation on
+Although it works fine with sizeless particles, it has a limitation on
 containing finite-sized objects. It might overlook objects if query is not copied
 when it is inside of the boundary and objects extend beyond the unit cell
-(figure\ref{fig-method-rtree-pbc}C).
+(figure\ref{fig-method-rtree-pbc}C). To overcome this limitation, the criteria
+to judge whether the query range sticks out of the unit cell dynamically
+depending on the shape of objects contained inside.
 
 Here I propose the novel method to apply PBCs to an R-Tree. The main idea is
-applying the PBCs to each operations for AABBs that are performed in each step
-to maintain an R-Tree. By allowing an AABB corresponding to each node to extend
-along PBCs, an R-Tree become capable of containing objects in the most natural
-way on PBCs and overcoming the limitation of containing finite-sized object
+applying the PBCs to each operations that are performed to maintain an R-Tree
+such as the expansion of AABBs and/or the testing whether AABBs intersect
+each other.
+By expanding an AABB corresponding to each node along the boundary conditions,
+an R-Tree become capable of containing objects in the most intuitive way and
+overcoming the limitation of containing finite-sized object under the PBCs
 (figure\ref{fig-method-rtree-pbc}D).
-With this method, it is not needed to copy objects or queries at all.
+
+In the method part, I show that the most of the operations such as intersection
+detection can be implemented just by introducing periodic transpose to the
+algorithms when one use the appropreate representation of an AABB.
+Consequently, this method require the specific representation or
+conversion between the representations of an AABB.
+
+This method does not require to copy objects or queries.
 Moreover, using the information about the boundary condition, it has more chance
-to reduce the AABBs of each node. Since the efficiency of spatial searching on
-an R-Tree is strongly affected by the size of each nodes, this feature increase
-the efficiency of spatial searching in some cases.
+to reduce the volume of AABBs of each node. Since the efficiency of spatial
+searching with an R-Tree is strongly affected by the size of each nodes, this
+feature possibly increase the efficiency of spatial searching in some cases.
 
 \begin{figure}[hbt]
-    \includegraphics[width=8.4cm, bb=6 3 220 224]{fig1.eps}
+    \includegraphics[width=8.0cm, bb=6 3 220 224]{fig1.eps}
     \caption{Methods to handle R-Tree on periodic boundary conditions.
     (\textbf{A})
     By copying the unit cell for each dimension along periodicity, normal R-Tree
@@ -123,47 +145,53 @@ the efficiency of spatial searching in some cases.
 Here I introduce some operations to modify and handle rectangles on PBCs.
 I do not modify the algorithm to grow and maintain an R-Tree at all.
 Hence, in this setion, I do not show algorithm to construct R-Tree itself.
-It means that this method can potentially be applied for some of the R-Tree
+It means that this method is potentially applicable for some of the R-Tree
 variants and the other spatial indexing methods that is based on BVH and
 uses AABBs.
 
 Because the rectangles used in R-Tree are axis-aligned, it is enough to show an
 operation for one dimension to provide the whole algorithm.
 Applying it to each dimensions successively, these operations can be extended
-straightforwardly for higher dimension cases.
+for higher dimension cases.
 
 \paragraph{Representation of PBCs.}
-For simplicity, I consider only cuboids as an unit cell of the PBCs.
-Here, all the coordinates of objects are restricted to inside of the unit cell.
-There are well-known alrogithm to restrict coordinates and vectors to the unit cell.
-In this paper, I call them as \textbf{RestrictPosition} and
+Here, I consider only cuboids as an unit cell of the PBCs. I assume all the
+coordinates of the objects are restricted to be inside of the unit cell.
+There are well-known alrogithm to restrict coordinates and vectors to the unit
+cell. In this paper, I call them as \textbf{RestrictPosition} and
 \textbf{RestrictVector}, respectively.
 
 \paragraph{Representation of AABBs.}
 There are three common representations for AABBs
 (figure~\ref{fig-rectangle-rep})~\cite{real-time-collision-detection}.
 The first one is a pair of the minimum and maximum coordinate values
-in each dimension. The second one is a pair of the minimum coordinate values and
-its width in each dimension. The third one is a pair of the center position and
-half-width in each dimension. Here, I call it as min-max, min-widths, and
-center-radius representation, respectively.
+in each dimension.
+The second one is a pair of the minimum coordinate values and its width in each
+dimension.
+The third one is a pair of the center position and half-width in each dimension.
+Here, I call it as min-max, min-widths, and center-radius representation,
+respectively.
 
 Because the method proposed in this paper quite often uses center position of
-an AABB, here I employ an center-radius representation.
+an AABB, here I employ center-radius representation. It makes the processes
+simple, but this representation is not indispensable because the center position
+can be calculated with another representation.
 
-\begin{equation}
-    rectangle = \{center, radius\}
-\end{equation}
+\begin{eqnarray}
+    rectangle = \{center, radius\} \nonumber
+\end{eqnarray}
 
-Needless to say, all the representations have identical information, one can
-convert one representation to another. By algorithm\ref{center_aabb} and
-\ref{radius_aabb}, one can easily convert the min-max representation to
-the center-radius representation. It should be noted that a maximum coordinate
-value might be smaller than the corresponding minimum coordinate value because
-all the coordinates are restricted to inside of the unit cell.
+Clearly, since all the representations have identical information about an AABB,
+one can convert one representation to another. Algorithm\ref{center_aabb} and
+\ref{radius_aabb}, provide ways to convert the min-max representation to
+the center-radius representation according to the PBCs.
+It should be noted that the maximum coordinate value might be smaller than the
+corresponding minimum coordinate value because all the coordinates are
+restricted to inside of the unit cell by transposing. It shows that the AABB
+sticks out of the boundary.
 
-\begin{figure}[hbt]
-    \includegraphics[width=8.4cm, bb=2 6 226 165]{fig-rect-rep.eps}
+\begin{figure}[thb]
+    \includegraphics[width=8.0cm, bb=2 6 226 165]{fig-rect-rep.eps}
     \caption{
     (\textbf{A})
     Three popular representations of an AABB. First one is min-max,
@@ -176,7 +204,7 @@ all the coordinates are restricted to inside of the unit cell.
     \label{fig-rectangle-rep}
 \end{figure}
 
-\begin{algorithm}[thb]
+\begin{algorithm}[htb]
     \caption{calculate the centroid of an AABB on PBCs.}
     \label{center_aabb}
     \begin{algorithmic}
@@ -194,7 +222,7 @@ all the coordinates are restricted to inside of the unit cell.
      \end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}[thb]
+\begin{algorithm}[htb]
     \caption{calculate the width of an AABB on PBCs.}
     \label{radius_aabb}
     \begin{algorithmic}
@@ -212,7 +240,7 @@ all the coordinates are restricted to inside of the unit cell.
      \end{algorithmic}
 \end{algorithm}
 
-\paragraph{Expanding AABBs on PBCs.}
+\paragraph{Expanding AABBs according to PBCs.}
 Expanding an AABB to ensure it contains a new contents is one of the most
 important operations in an R-Tree algorithms.
 Because the total area that is covered by AABBs in the nodes of an R-Tree
@@ -227,7 +255,11 @@ Therefore, by minimizing the distance between their centroids, the minimum
 expansion can be found. To minimize the distance between two points on PBCs,
 the \textbf{RestrictVector} can be used.
 
-\begin{algorithm}[thb]
+For the case of a point, it become simpler as described in the algorithm
+~\ref{expand_aabb_point}. By minimizing the distance between centroid of the
+rectangle and the point to be contained, the minimum expansion can be found.
+
+\begin{algorithm}[htb]
     \caption{expand AABB so that it contains another AABB}
     \label{expand_aabb_aabb}
     \begin{algorithmic}
@@ -254,11 +286,7 @@ the \textbf{RestrictVector} can be used.
      \end{algorithmic}
 \end{algorithm}
 
-For the case of a point, it become simpler as described in the algorithm
-~\ref{expand_aabb_point}. By minimizing the distance between centroid of the
-rectangle and the point to be contained, the minimum expansion can be found.
-
-\begin{algorithm}[thb]
+\begin{algorithm}[htb]
     \caption{expand AABB so that it contains a point}
     \label{expand_aabb_point}
     \begin{algorithmic}
@@ -283,6 +311,8 @@ rectangle and the point to be contained, the minimum expansion can be found.
      \end{algorithmic}
 \end{algorithm}
 
+
+
 \paragraph{Detecting an object includes or intersects the other object}
 
 To find an object in an R-Tree, the algorithm is needed to check whether an
@@ -292,7 +322,7 @@ rectangles.
 The algorithm for the center-radius representation can be applied after
 restricting the inter center points vector.
 
-\begin{algorithm}[thb]
+\begin{algorithm}[tbh]
     \caption{Check whether an AABB is inside of an AABB}
     \begin{algorithmic}
         \State $R1 \gets$ rectangle
@@ -307,7 +337,7 @@ restricting the inter center points vector.
      \end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}[thb]
+\begin{algorithm}[tbh]
     \caption{Check whether a point is inside of an AABB}
     \begin{algorithmic}
         \State $R \gets$ rectangle
@@ -321,7 +351,7 @@ restricting the inter center points vector.
      \end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}[thb]
+\begin{algorithm}[tbh]
     \caption{Check whether an AABB intersects to another AABB}
     \begin{algorithmic}
         \State $R1 \gets$ rectangle
@@ -337,8 +367,8 @@ restricting the inter center points vector.
 
 \section*{Results}
 
-The codes that are used for this study is available on GitHub
-~\cite{periortree-2017}.
+The codes that are used for this paper is available on GitHub
+(\url{http://github.com/ToruNiina/periortree}).
 
 The three steps of expansion of an AABB to contain rectangles is shown in
 figure~\ref{fig-result}A.
@@ -367,16 +397,16 @@ while there are four rectangles drawn in the second panel of figure
 
 \section*{Conclusion}
 
-In this paper, the novel method for applying PBCs to Guttman's R-Tree is
-introduced. Proposed method is capable of containing not only sizeless points
-but also objects with finite size. The method can remove the necessity of
-storing extensional objects or replicating queries. Moreover, it reduces the
+In this paper, the novel method for applying PBCs to R-Trees is introduced.
+Proposed method is capable of containing not only sizeless points but also
+objects with finite size. The method can remove the necessity of both storing
+extensional objects and replicating queries. Moreover, it reduces the
 size of each node in the natural way on PBCs.
 
 On the other hand, the method introduces tiny but additional costs into each
 procedures for maintaining R-Tree and checking geometrical conditions because it
-considers the PBCs for all of the procedure. It might decrease the efficiency of
-the R-Tree in some case.
+considers the PBCs for all of the steps of searching objects, containing new
+objects. It might decrease the efficiency of the R-Tree in some case.
 
 As described before, since the method is only for modifying and handling
 rectangles on PBCs, it can essentially be applied for the other R-Tree variants
