@@ -8,7 +8,7 @@ PerioR-Tree is a header-only library depending on Boost C++ Library.
 
 The user-interface is inspired by Boost.Geometry library[2](#References).
 
-## Usage
+![](misc/rtree.gif)
 
 
 ## Example
