@@ -10,7 +10,6 @@ The user-interface is inspired by Boost.Geometry library[2](#References).
 
 ![](misc/rtree.gif)
 
-
 ## Example
 
 inserting spheres into rtree with your own position type
@@ -79,3 +78,7 @@ int main()
 
 1. Guttman, A. (1984) "R-Trees: A Dynamic Index Structure for Spatial Searching"
 2. Barend G., Bruno L., Mateusz L., Adam W., Menelaos K., and Vissarion F. (2009) [Boost.Geometry](http://www.boost.org/doc/libs/1_65_0/libs/geometry/doc/html/index.html)
+
+## Citation
+
+http://arxiv.org/abs/1712.02977
