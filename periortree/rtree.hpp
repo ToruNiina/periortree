@@ -10,6 +10,7 @@
 #include <periortree/to_svg.hpp>
 #include <periortree/containers.hpp>
 
+#include <assert.h>
 #include <boost/optional.hpp>
 #include <limits>
 

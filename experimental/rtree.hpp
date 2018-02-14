@@ -5,6 +5,7 @@
 #include "within.hpp"
 #include "area.hpp"
 #include "dump.hpp"
+#include <assert.h>
 #include <boost/container/vector.hpp>
 #include <boost/container/small_vector.hpp>
 #include <boost/optional.hpp>

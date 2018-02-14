@@ -2,6 +2,7 @@
 #define PERIOR_TREE_AREA
 #include <periortree/boundary_conditions.hpp>
 #include <periortree/rectangle.hpp>
+#include <assert.h>
 #include <cmath>
 
 namespace perior
